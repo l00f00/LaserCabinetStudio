@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Laser Cabinet Studio</title>
+  <meta name="description" content="Configuratore parametrico per mobili laser con incastri, ripiani e frontalini.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="logo">L</span><div><strong>Laser Cabinet Studio</strong><small>mobili parametrici per taglio laser</small></div></div>
+    <div class="status"><span></span> calcolo locale · nessun account</div>
+  </header>
+  <main>
+    <aside>
+      <section class="intro">
+        <div class="eyebrow">PROGETTO</div>
+        <input id="project" class="project" value="Mobiletto camper">
+        <p>Modifica una quota: modello, incastri e piano di taglio si aggiornano insieme.</p>
+      </section>
+
+      <details open><summary>01 · Ingombro e materiale</summary><div class="fields">
+        <label>Larghezza totale <output id="widthOut"></output><input id="width" type="range" min="200" max="1600" step="5" value="900"><input data-for="width" type="number" value="900"></label>
+        <label>Altezza <output id="heightOut"></output><input id="height" type="range" min="100" max="1000" step="5" value="500"><input data-for="height" type="number" value="500"></label>
+        <label>Profondità <output id="depthOut"></output><input id="depth" type="range" min="60" max="600" step="5" value="150"><input data-for="depth" type="number" value="150"></label>
+        <div class="row"><label>Spessore MDF<input id="thickness" type="number" step="0.1" value="5"></label><label>Kerf<input id="kerf" type="number" step="0.01" value="0.05"></label></div>
+      </div></details>
+
+      <details open><summary>02 · Struttura</summary><div class="fields">
+        <label>Moduli<select id="modules"><option value="1">1 modulo</option><option value="2" selected>2 moduli</option><option value="3">3 moduli</option></select></label>
+        <div id="splitWrap"><label>Divisione larghezza <output id="splitOut"></output><input id="split" type="range" min="20" max="80" value="44"></label></div>
+        <div class="row"><label>Ripiani per modulo<input id="shelves" type="number" min="0" max="6" value="1"></label><label>Frontalino<input id="lip" type="number" min="0" max="180" value="55"></label></div>
+        <label>Posizione frontalino<select id="lipMode"><option value="each" selected>Su ogni ripiano</option><option value="bottom">Solo in basso</option><option value="none">Nessuno</option></select></label>
+      </div></details>
+
+      <details open><summary>03 · Incastro</summary><div class="fields">
+        <label>Tipo<select id="joint"><option value="tab" selected>Linguetta + asola</option><option value="finger">Denti a pettine</option></select></label>
+        <div class="row"><label>Passo dente<input id="finger" type="number" min="8" max="80" value="24"></label><label>Pressione<input id="press" type="number" step="0.01" value="0.05"></label></div>
+        <label class="check"><input id="dogbone" type="checkbox"> Scarichi angolo (CNC, non laser)</label>
+        <div class="fit"><span>Asola calcolata</span><strong id="slotValue">4,85 mm</strong></div>
+      </div></details>
+
+      <details><summary>04 · Foglio e progetto</summary><div class="fields">
+        <div class="row"><label>Foglio X<input id="sheetW" type="number" value="1200"></label><label>Foglio Y<input id="sheetH" type="number" value="900"></label></div>
+        <label>Distanza pezzi<input id="gap" type="number" min="2" value="8"></label>
+        <div class="button-grid"><button id="saveJson" class="secondary">Scarica JSON</button><button id="share" class="secondary">Copia link</button></div>
+      </div></details>
+    </aside>
+
+    <section class="workspace">
+      <div class="toolbar">
+        <div class="tabs"><button class="tab active" data-view="model">Modello 3D</button><button class="tab" data-view="cut">Piano di taglio</button></div>
+        <div class="view-actions"><button id="resetView" class="ghost">Centra</button><button id="downloadSvg" class="primary">Scarica SVG</button><button id="downloadDxf" class="secondary">DXF</button></div>
+      </div>
+      <div id="modelView" class="viewport"><canvas id="model"></canvas><div class="hint">trascina per ruotare · rotella per zoom</div></div>
+      <div id="cutView" class="viewport hidden"><svg id="cutPreview" aria-label="Anteprima del piano di taglio"></svg><div class="hint">rosso: taglio · blu: incisione</div></div>
+      <div class="metrics">
+        <div><small>Ingombro</small><strong id="metricSize">900 × 500 × 150</strong><span>mm</span></div>
+        <div><small>Pezzi</small><strong id="metricPieces">—</strong><span>componenti</span></div>
+        <div><small>Moduli</small><strong id="metricModules">2</strong><span>indipendenti</span></div>
+        <div><small>Taglio stimato</small><strong id="metricCut">—</strong><span>metri</span></div>
+      </div>
+    </section>
+  </main>
+  <div id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
