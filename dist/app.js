@@ -41,4 +41,6 @@ $('#share').onclick=async()=>{const u=location.href.split('#')[0]+'#'+btoa(encod
 $('#resetView').onclick=()=>{state.angle=-.65;state.tilt=.48;state.zoom=1;render3D()};
 const c=$('#model');let drag=false,lx=0,ly=0;c.onpointerdown=e=>{drag=true;lx=e.clientX;ly=e.clientY;c.setPointerCapture(e.pointerId)};c.onpointermove=e=>{if(!drag)return;state.angle+=(e.clientX-lx)*.008;state.tilt=Math.max(.15,Math.min(1.2,state.tilt+(e.clientY-ly)*.006));lx=e.clientX;ly=e.clientY;render3D()};c.onpointerup=()=>drag=false;c.onwheel=e=>{e.preventDefault();state.zoom=Math.max(.35,Math.min(2,state.zoom*(e.deltaY>0?.9:1.1)));render3D()};
 function toast(s){const t=$('#toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+const baseSvgString=svgString;svgString=()=>baseSvgString().replace('<g fill="none" stroke="#ff0000" stroke-width="0.1">','<rect width="100%" height="100%" fill="#fffdf8"/><g fill="none" stroke="#d71920" stroke-width="0.35">');
+$$('input,select').forEach(el=>el.addEventListener('change',update));
 addEventListener('resize',render3D);load();update();
