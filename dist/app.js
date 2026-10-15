@@ -9,8 +9,8 @@ function fitSlot(){return Math.max(.1,num('thickness')-2*num('kerf')-num('press'
 function angleOffsets(){const d=num('depth');return [Math.tan((90-num('angleL'))*Math.PI/180)*d,Math.tan((90-num('angleR'))*Math.PI/180)*d]}
 function frontTabs(span){return [[30,60],[span/2-15,span/2+15],[span-60,span-30]].filter(x=>x[0]>5&&x[1]<span-5)}
 function edgeTabs(d){const f=Math.max(8,num('finger')),n=Math.max(2,Math.floor((d-20)/f));const gap=(d-20)/n;return Array.from({length:Math.ceil(n/2)},(_,i)=>[10+i*gap*2,Math.min(d-10,10+i*gap*2+gap)])}
-function polyShelf(w,d,t,tabs,leftInset=0,rightInset=0){const backL=t+leftInset,backR=w-t-rightInset;const p=[[t,0],[w-t,0]];tabs.forEach(([a,b])=>p.push([w-t,a],[w,a],[w-rightInset,b],[backR,b]));p.push([backR,d],[backL,d]);[...tabs].reverse().forEach(([a,b])=>p.push([backL,b],[0,b],[0,a],[t,a]));return p}
-function polySide(d,h,t,tabs,skew=0,side='left'){const s=side==='left'?skew:-skew;const p=[[0,t],[s,t]];tabs.forEach(([a,b])=>p.push([a+s,t],[a+s,0],[b+s,0],[b+s,t]));p.push([d+s,t],[d,h-t]);[...tabs].reverse().forEach(([a,b])=>p.push([b,h-t],[b,h],[a,h],[a,h-t]));return p}
+function polyShelf(w,d,t,tabs,leftInset=0,rightInset=0){const frontL=t,frontR=w-t,backL=t+leftInset,backR=w-t-rightInset;const lerp=(a,b,y)=>a+(b-a)*y/d;const p=[[frontL,0],[frontR,0]];tabs.forEach(([a,b])=>{p.push([lerp(frontR,backR,a),a],[w,a],[w,b],[lerp(frontR,backR,b),b])});p.push([backR,d],[backL,d]);[...tabs].reverse().forEach(([a,b])=>{p.push([lerp(frontL,backL,b),b],[0,b],[0,a],[lerp(frontL,backL,a),a])});return p}
+function polySide(d,h,t,tabs,skew=0,side='left'){const s=side==='left'?skew:-skew;return [[0,0],[d,0],[d+s,h],[s,h]]}
 function polyFront(w,h,t,tabs){const p=[[0,0],[w,0],[w,h]];[...tabs].reverse().forEach(([a,b])=>p.push([b,h],[b,h+t],[a,h+t],[a,h]));return p.concat([[0,h]])}
 function geometry(){
  const d=num('depth'),h=num('height'),t=num('thickness'),s=num('shelves'),lip=num('lip'),gap=num('gap'),slot=fitSlot(),et=edgeTabs(d),[skewL,skewR]=angleOffsets();let parts=[];
