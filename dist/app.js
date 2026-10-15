@@ -10,7 +10,7 @@ function angleOffsets(){const d=num('depth');return [Math.tan((90-num('angleL'))
 function frontTabs(span){return [[30,60],[span/2-15,span/2+15],[span-60,span-30]].filter(x=>x[0]>5&&x[1]<span-5)}
 function edgeTabs(d){const f=Math.max(8,num('finger')),n=Math.max(2,Math.floor((d-20)/f));const gap=(d-20)/n;return Array.from({length:Math.ceil(n/2)},(_,i)=>[10+i*gap*2,Math.min(d-10,10+i*gap*2+gap)])}
 function polyShelf(w,d,t,tabs,leftInset=0,rightInset=0){const frontL=t,frontR=w-t,backL=t+leftInset,backR=w-t-rightInset;const lerp=(a,b,y)=>a+(b-a)*y/d;const p=[[frontL,0],[frontR,0]];tabs.forEach(([a,b])=>{p.push([lerp(frontR,backR,a),a],[w,a],[w,b],[lerp(frontR,backR,b),b])});p.push([backR,d],[backL,d]);[...tabs].reverse().forEach(([a,b])=>{p.push([lerp(frontL,backL,b),b],[0,b],[0,a],[lerp(frontL,backL,a),a])});return p}
-function polySide(d,h,t,tabs,skew=0,side='left'){const p=[[0,0]];tabs.forEach(([a,b])=>p.push([a,0],[a,-t],[b,-t],[b,0]));p.push([d,0],[d,h]);[...tabs].reverse().forEach(([a,b])=>p.push([b,h],[b,h+t],[a,h+t],[a,h]));p.push([0,h]);return p}
+function polySide(d,h,t,tabs,skew=0,side='left'){return [[0,0],[d,0],[d,h],[0,h]]}
 function polyFront(w,h,t,tabs){const p=[[0,0],[w,0],[w,h]];[...tabs].reverse().forEach(([a,b])=>p.push([b,h],[b,h+t],[a,h+t],[a,h]));return p.concat([[0,h]])}
 function geometry(){
  const d=num('depth'),h=num('height'),t=num('thickness'),s=num('shelves'),lip=num('lip'),gap=num('gap'),slot=fitSlot(),et=edgeTabs(d),[skewL,skewR]=angleOffsets();let parts=[];
