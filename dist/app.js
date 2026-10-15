@@ -1,23 +1,24 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const ids=['width','height','depth','thickness','kerf','modules','split','shelves','lip','lipMode','joint','finger','press','sheetW','sheetH','gap','project'];
+const ids=['width','height','depth','thickness','kerf','modules','split','shelves','lip','lipMode','angleL','angleR','parachute','parachuteDepth','joint','hinge','hingeSize','finger','press','sheetW','sheetH','gap','project'];
 const state={angle:-.65,tilt:.48,zoom:1};
 const num=id=>+$('#'+id).value;
 function params(){return Object.fromEntries(ids.map(id=>[id,$('#'+id).value]))}
 function load(){try{const h=location.hash.slice(1);if(!h)return;const p=JSON.parse(decodeURIComponent(atob(h)));ids.forEach(id=>{if(p[id]!=null)$('#'+id).value=p[id]})}catch(e){}}
 function moduleWidths(){const n=num('modules'),w=num('width');if(n===1)return[w];if(n===2){const a=Math.round(w*num('split')/100);return[a,w-a]}return [Math.round(w/3),Math.round(w/3),w-2*Math.round(w/3)]}
 function fitSlot(){return Math.max(.1,num('thickness')-2*num('kerf')-num('press'))}
+function angleOffsets(){const d=num('depth');return [Math.tan((num('angleL')-90)*Math.PI/180)*d,Math.tan((num('angleR')-90)*Math.PI/180)*d]}
 function frontTabs(span){return [[30,60],[span/2-15,span/2+15],[span-60,span-30]].filter(x=>x[0]>5&&x[1]<span-5)}
 function edgeTabs(d){const f=Math.max(8,num('finger')),n=Math.max(2,Math.floor((d-20)/f));const gap=(d-20)/n;return Array.from({length:Math.ceil(n/2)},(_,i)=>[10+i*gap*2,Math.min(d-10,10+i*gap*2+gap)])}
 function polyShelf(w,d,t,tabs){const p=[[t,0],[w-t,0]];tabs.forEach(([a,b])=>p.push([w-t,a],[w,a],[w,b],[w-t,b]));p.push([w-t,d],[t,d]);[...tabs].reverse().forEach(([a,b])=>p.push([t,b],[0,b],[0,a],[t,a]));return p}
-function polySide(d,h,t,tabs){const p=[[0,t]];tabs.forEach(([a,b])=>p.push([a,t],[a,0],[b,0],[b,t]));p.push([d,t],[d,h-t]);[...tabs].reverse().forEach(([a,b])=>p.push([b,h-t],[b,h],[a,h],[a,h-t]));return p}
+function polySide(d,h,t,tabs,skew=0){const p=[[0,t],[skew,t]];tabs.forEach(([a,b])=>p.push([a+skew,t],[a+skew,0],[b+skew,0],[b+skew,t]));p.push([d+skew,t],[d,h-t]);[...tabs].reverse().forEach(([a,b])=>p.push([b,h-t],[b,h],[a,h],[a,h-t]));return p}
 function polyFront(w,h,t,tabs){const p=[[0,0],[w,0],[w,h]];[...tabs].reverse().forEach(([a,b])=>p.push([b,h],[b,h+t],[a,h+t],[a,h]));return p.concat([[0,h]])}
 function geometry(){
- const d=num('depth'),h=num('height'),t=num('thickness'),s=num('shelves'),lip=num('lip'),gap=num('gap'),slot=fitSlot(),et=edgeTabs(d);let parts=[];
+ const d=num('depth'),h=num('height'),t=num('thickness'),s=num('shelves'),lip=num('lip'),gap=num('gap'),slot=fitSlot(),et=edgeTabs(d),[skewL,skewR]=angleOffsets();let parts=[];
  moduleWidths().forEach((mw,mi)=>{
   for(const name of ['TOP','BOTTOM']){let holes=[];[10,mw-15].forEach(x=>et.forEach(([a,b])=>holes.push([x+(t-slot)/2,a+(b-a-(b-a-2*num('kerf')-num('press')))/2,slot,b-a-2*num('kerf')-num('press')] )));parts.push({name:`M${mi+1} ${name}`,kind:'rect',w:mw,h:d,holes})}
-  for(const side of ['LEFT','RIGHT']){let holes=[];for(let j=1;j<=s;j++){const y=h*j/(s+1)-slot/2;et.forEach(([a,b])=>holes.push([a+(b-a-(b-a-2*num('kerf')-num('press')))/2,y,b-a-2*num('kerf')-num('press'),slot]))}parts.push({name:`M${mi+1} SIDE ${side}`,kind:'poly',pts:polySide(d,h,t,et),holes})}
+  for(const side of ['LEFT','RIGHT']){let holes=[];for(let j=1;j<=s;j++){const y=h*j/(s+1)-slot/2;et.forEach(([a,b])=>holes.push([a+(b-a-(b-a-2*num('kerf')-num('press')))/2,y,b-a-2*num('kerf')-num('press'),slot]))}const skew=side==='LEFT'?skewL:-skewR;parts.push({name:`M${mi+1} SIDE ${side}`,kind:'poly',pts:polySide(d,h,t,et,skew),holes})}
   const span=mw-30,sw=span+2*t;
-  for(let j=1;j<=s;j++){let holes=[];if(num('lip')>0&&$('#lipMode').value==='each')frontTabs(span).forEach(([a,b])=>holes.push([t+a+num('kerf'),15-slot/2,b-a-2*num('kerf')-num('press'),slot]));parts.push({name:`M${mi+1} SHELF ${j}`,kind:'poly',pts:polyShelf(sw,d,t,et),holes});if(lip>0&&$('#lipMode').value==='each')parts.push({name:`M${mi+1} FRONT ${j}`,kind:'poly',pts:polyFront(span,lip,t,frontTabs(span)),holes:[]})}
+  for(let j=1;j<=s;j++){let holes=[];if(num('lip')>0&&$('#lipMode').value==='each')frontTabs(span).forEach(([a,b])=>holes.push([t+a+num('kerf'),15-slot/2,b-a-2*num('kerf')-num('press'),slot]));if($('#hinge').value!=='none'&&j===1){const hs=num('hingeSize');if($('#hinge').value==='left'||$('#hinge').value==='both')holes.push([8,Math.max(8,lip/2-hs/2),hs,hs]);if($('#hinge').value==='right'||$('#hinge').value==='both')holes.push([span-8-hs,Math.max(8,lip/2-hs/2),hs,hs])}parts.push({name:`M${mi+1} SHELF ${j}`,kind:'poly',pts:polyShelf(sw,d,t,et),holes});if(lip>0&&$('#lipMode').value==='each'){let frontHoles=[];const pd=num('parachuteDepth');if($('#parachute').value==='single')frontHoles.push([span/2-pd/2,lip/2-5,pd,10]);if($('#parachute').value==='double'){frontHoles.push([span*.28-pd/2,lip/2-5,pd,10],[span*.72-pd/2,lip/2-5,pd,10])}parts.push({name:`M${mi+1} FRONT ${j}`,kind:'poly',pts:polyFront(span,lip,t,frontTabs(span)),holes:frontHoles})}}
  });return parts;
 }
 function dims(p){if(p.kind==='rect')return[p.w,p.h];return[Math.max(...p.pts.map(x=>x[0])),Math.max(...p.pts.map(x=>x[1]))]}

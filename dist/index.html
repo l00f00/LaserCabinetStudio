@@ -34,8 +34,17 @@
         <label>Posizione frontalino<select id="lipMode"><option value="each" selected>Su ogni ripiano</option><option value="bottom">Solo in basso</option><option value="none">Nessuno</option></select></label>
       </div></details>
 
-      <details open><summary>03 · Incastro</summary><div class="fields">
-        <label>Tipo<select id="joint"><option value="tab" selected>Linguetta + asola</option><option value="finger">Denti a pettine</option></select></label>
+      <details open><summary>03 · Angoli e frontali</summary><div class="fields">
+        <div class="row"><label>Angolo lato sinistro<input id="angleL" type="number" min="45" max="135" step="0.5" value="90"></label><label>Angolo lato destro<input id="angleR" type="number" min="45" max="135" step="0.5" value="90"></label></div>
+        <label>Paracadute frontali<select id="parachute"><option value="none" selected>Nessuno</option><option value="single">Una apertura</option><option value="double">Doppia apertura</option></select></label>
+        <label>Profondità paracadute<input id="parachuteDepth" type="number" min="10" max="100" value="35"></label>
+        <div class="fit"><span>Offset angoli</span><strong id="angleValue">0 / 0 mm</strong></div>
+      </div></details>
+
+      <details open><summary>04 · Incastro e ferramenta</summary><div class="fields">
+        <label>Tipo<select id="joint"><option value="tab" selected>Linguetta + asola</option><option value="finger">Finger joint · denti a pettine</option><option value="hinge">Incastro cerniera</option><option value="parachute">Paracadute frontale</option></select></label>
+        <label>Cerniere<select id="hinge"><option value="none" selected>Nessuna</option><option value="left">A sinistra</option><option value="right">A destra</option><option value="both">Su entrambi i lati</option></select></label>
+        <label>Diametro sede cerniera<input id="hingeSize" type="number" min="8" max="35" value="18"></label>
         <div class="row"><label>Passo dente<input id="finger" type="number" min="8" max="80" value="24"></label><label>Pressione<input id="press" type="number" step="0.01" value="0.05"></label></div>
         <label class="check"><input id="dogbone" type="checkbox"> Scarichi angolo (CNC, non laser)</label>
         <div class="fit"><span>Asola calcolata</span><strong id="slotValue">4,85 mm</strong></div>
