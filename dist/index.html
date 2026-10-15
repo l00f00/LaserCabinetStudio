@@ -28,14 +28,16 @@
       </div></details>
 
       <details open><summary>02 · Struttura</summary><div class="fields">
-        <label>Moduli<select id="modules"><option value="1">1 modulo</option><option value="2" selected>2 moduli</option><option value="3">3 moduli</option></select></label>
+        <label>Moduli<select id="modules"><option value="1" selected>1 modulo</option><option value="2">2 moduli</option><option value="3">3 moduli</option></select></label>
         <div id="splitWrap"><label>Divisione larghezza <output id="splitOut"></output><input id="split" type="range" min="20" max="80" value="44"></label></div>
         <div class="row"><label>Ripiani per modulo<input id="shelves" type="number" min="0" max="6" value="1"></label><label>Frontalino<input id="lip" type="number" min="0" max="180" value="55"></label></div>
         <label>Posizione frontalino<select id="lipMode"><option value="each" selected>Su ogni ripiano</option><option value="bottom">Solo in basso</option><option value="none">Nessuno</option></select></label>
       </div></details>
 
       <details open><summary>03 · Angoli e frontali</summary><div class="fields">
-        <div class="row"><label>Angolo lato sinistro<input id="angleL" type="number" min="45" max="135" step="0.5" value="90"></label><label>Angolo lato destro<input id="angleR" type="number" min="45" max="135" step="0.5" value="90"></label></div>
+        <label>Parete selezionata<select id="wallSelect"><option value="left" selected>Parete laterale sinistra</option><option value="right">Parete laterale destra</option><option value="top">Piano superiore</option><option value="bottom">Piano inferiore</option></select></label>
+        <div class="fit"><span>Selezione 3D</span><strong id="selectedWall">Sinistra</strong></div>
+        <div class="row"><label>Angolo lato sinistro<input id="angleL" type="number" min="45" max="135" step="0.5" value="45"></label><label>Angolo lato destro<input id="angleR" type="number" min="45" max="135" step="0.5" value="90"></label></div>
         <label>Paracadute frontali<select id="parachute"><option value="none" selected>Nessuno</option><option value="single">Una apertura</option><option value="double">Doppia apertura</option></select></label>
         <label>Profondità paracadute<input id="parachuteDepth" type="number" min="10" max="100" value="35"></label>
         <div class="fit"><span>Offset angoli</span><strong id="angleValue">0 / 0 mm</strong></div>
