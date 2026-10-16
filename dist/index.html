@@ -54,6 +54,19 @@
         <div class="row"><label>Passo dente<input id="finger" type="number" min="8" max="80" value="24"></label><label>Pressione<input id="press" type="number" step="0.01" value="0.05"></label></div>
         <label class="check"><input id="dogbone" type="checkbox"> Scarichi angolo (CNC, non laser)</label>
         <div class="fit"><span>Asola calcolata</span><strong id="slotValue">4,85 mm</strong></div>
+        <div class="field-divider"><span>UNIONE TRA MODULI</span></div>
+        <label>Collegamento<select id="moduleJoin">
+          <option value="wall" selected>Parete mediana</option>
+          <option value="dovetail">Coda di rondine · senza parete</option>
+        </select></label>
+        <div id="dovetailOptions" class="nested-options">
+          <label>Polarità primo modulo<select id="dovetailPolarity">
+            <option value="positive" selected>Positivo / maschio → negativo</option>
+            <option value="negative">Negativo / femmina → positivo</option>
+          </select></label>
+          <div class="row"><label>Code per giunto<input id="dovetailCount" type="number" min="1" max="8" step="1" value="3"></label><label>Profondità<input id="dovetailDepth" type="number" min="4" max="50" step="1" value="15"></label></div>
+          <div class="join-note" id="dovetailNote">Top, fondo e ripiani vengono divisi in pannelli complementari. Le pareti interne sono eliminate.</div>
+        </div>
       </div></details>
 
       <details><summary>05 · Foglio e progetto</summary><div class="fields">
