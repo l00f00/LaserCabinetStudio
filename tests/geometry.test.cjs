@@ -26,5 +26,18 @@ for(const modules of [2,3])for(const dovetailPolarity of ['positive','negative']
  assert(m2.name.includes(dovetailPolarity==='positive'?'−':'+'),'Il secondo modulo deve avere il profilo complementare');
  model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
 }
+{
+ const p={...base,shelves:2,frontGap:2,drawerClearance:2,drawerHeight:80,frontConfig:JSON.stringify({'m1-b1':'door-left','m1-b2':'door-double','m1-b3':'drawer'})};
+ const model=G.build(p),doors=model.parts.filter(q=>q.key.startsWith('door-b')),drawer=model.parts.filter(q=>q.key.startsWith('drawer-b3'));
+ assert.equal(doors.length,3,'Sportello singolo e doppio devono produrre tre ante');
+ assert.equal(drawer.length,5,'Il cassetto deve produrre frontale, fondo, due fianchi e schiena');
+ assert.equal(model.parts.filter(q=>q.key.startsWith('front-')).length,0,'I frontalini anticaduta non devono sovrapporsi ai vani chiusi');
+ model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
+}
+{
+ const p={...base,modules:2,moduleJoin:'dovetail',dovetailPolarity:'positive',dovetailCount:3,dovetailDepth:15,frontGap:2,drawerClearance:2,drawerHeight:60,frontConfig:JSON.stringify({'m1-b1':'drawer','m2-b2':'door-right'})};
+ const model=G.build(p);assert.equal(model.parts.filter(q=>['left','right'].includes(q.key)).length,2);assert.equal(model.parts.filter(q=>q.key.includes('drawer')).length,5);assert.equal(model.parts.filter(q=>q.key.includes('door-b2')).length,1);
+ model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
+}
 assert.throws(()=>G.build({...base,width:200,angleR:45}));assert.throws(()=>G.pack(G.build(base).parts,{...base,sheetW:100}));
 console.log(`${cases} geometry configurations passed: closed/simple contours, angled joints, positive/negative dovetails, kerf and sheet packing.`);

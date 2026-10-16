@@ -60,7 +60,16 @@
         </div>
       </div></details>
 
-      <details><summary>05 · Foglio e progetto</summary><div class="fields">
+      <details open><summary>05 · Sportelli e cassetti</summary><div class="fields">
+        <p>Assegna una chiusura a ogni vano. “Vano 1” appoggia sul fondo; i successivi appoggiano sui rispettivi ripiani.</p>
+        <input id="frontConfig" type="hidden" value="{}">
+        <div id="compartmentControls" class="compartment-list"></div>
+        <div class="row"><label>Gioco frontale<input id="frontGap" type="number" min="0.5" max="8" step="0.1" value="2"></label><label>Gioco cassetto<input id="drawerClearance" type="number" min="0.5" max="10" step="0.1" value="2"></label></div>
+        <label>Altezza sponde cassetto<input id="drawerHeight" type="number" min="30" max="250" step="5" value="80"></label>
+        <div class="join-note">Sportelli e frontali riempiono il vano scelto. Il cassetto aggiunge frontale, fondo, due fianchi e schiena con incastri laser.</div>
+      </div></details>
+
+      <details><summary>06 · Foglio e progetto</summary><div class="fields">
         <div class="row"><label>Foglio X<input id="sheetW" type="number" value="1200"></label><label>Foglio Y<input id="sheetH" type="number" value="900"></label></div>
         <label>Distanza pezzi<input id="gap" type="number" min="2" value="8"></label>
         <div class="button-grid"><button id="saveJson" class="secondary">Scarica JSON</button><button id="share" class="secondary">Copia link</button></div>

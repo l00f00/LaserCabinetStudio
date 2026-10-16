@@ -1,16 +1,29 @@
 'use strict';
 const $=id=>document.getElementById(id), $$=q=>[...document.querySelectorAll(q)];
-const fields='project width height depth thickness kerf modules split shelves lip lipMode angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth sheetW sheetH gap'.split(' ');
-const words=new Set('project lipMode parachute joint hinge moduleJoin dovetailPolarity'.split(' '));
+const fields='project width height depth thickness kerf modules split shelves lip lipMode angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight sheetW sheetH gap'.split(' ');
+const words=new Set('project lipMode parachute joint hinge moduleJoin dovetailPolarity frontConfig'.split(' '));
 const view={angle:-.7,tilt:.6,zoom:1,pan:[0,0],mode:'model',selected:'M1-left',sheet:0,explode:0,wire:false,cutZoom:1,cutPan:[0,0]};
 let current,packed,params,faces=[],revision=0;
+let compartmentSignature='';
 const fmt=n=>Number(n.toFixed(3)),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const path=(p,x=0,y=0)=>p.map((q,i)=>(i?'L':'M')+fmt(q[0]+x)+' '+fmt(q[1]+y)).join(' ')+' Z';
 const read=()=>Object.fromEntries(fields.map(k=>[k,words.has(k)?$(k).value:Number($(k).value)]));
+function syncCompartments(p){
+ const signature=`${p.modules}:${p.shelves}`;if(signature===compartmentSignature)return false;compartmentSignature=signature;
+ let saved={};try{saved=JSON.parse(p.frontConfig||'{}')}catch{}
+ const valid={},options=[['open','Aperto'],['door-left','Sportello · cerniere sinistra'],['door-right','Sportello · cerniere destra'],['door-double','Doppio sportello'],['drawer','Cassetto completo']];
+ $('compartmentControls').innerHTML=Array.from({length:p.modules},(_,mi)=>{
+  const rows=Array.from({length:p.shelves+1},(_,bi)=>{const key=`m${mi+1}-b${bi+1}`,value=options.some(([v])=>v===saved[key])?saved[key]:'open';if(value!=='open')valid[key]=value;return `<label class="compartment-row"><span>Vano ${bi+1} · ${bi?'sopra ripiano '+bi:'sopra fondo'}</span><select data-compartment="${key}">${options.map(([v,label])=>`<option value="${v}"${v===value?' selected':''}>${label}</option>`).join('')}</select></label>`}).join('');
+  return `<div class="compartment-module"><strong>MODULO ${mi+1}</strong>${rows}</div>`;
+ }).join('');
+ $('frontConfig').value=JSON.stringify(valid);
+ $$('[data-compartment]').forEach(el=>el.onchange=()=>{let config={};try{config=JSON.parse($('frontConfig').value||'{}')}catch{}if(el.value==='open')delete config[el.dataset.compartment];else config[el.dataset.compartment]=el.value;$('frontConfig').value=JSON.stringify(config);update()});
+ return true;
+}
 function notice(s,error=false){$('validation').textContent=s;$('validation').classList.toggle('error',error)}
 function select(id){view.selected=id;$('wallSelect').value=id;const p=current?.parts.find(p=>p.id===id);$('selectedWall').textContent=p?.name||'—';['angleL','angleR'].forEach((k,i)=>$(k).closest('label').classList.toggle('selected-field',p?.key===(i?'right':'left')));render3D();renderCut()}
 function update(){
- revision++;params=read();let error='';
+ revision++;params=read();if(syncCompartments(params))params=read();let error='';
  ['width','height','depth','split'].forEach(k=>$(k+'Out').textContent=params[k]+(k==='split'?' %':' mm'));
  $('splitWrap').hidden=params.modules!==2;
  $('hingeFields').hidden=params.hinge==='none';
@@ -36,7 +49,8 @@ function update(){
   $('metricSize').textContent=[params.width,params.height,params.depth].join(' × ');
   const length=current.parts.reduce((sum,p)=>sum+[p.outline,...p.holes].reduce((s,loop)=>s+loop.reduce((v,q,i)=>v+Math.hypot(q[0]-loop[(i+1)%loop.length][0],q[1]-loop[(i+1)%loop.length][1]),0),0),0);
   $('metricCut').textContent=(length/1000).toFixed(2);
-  notice(error||`Revisione ${revision} · ${current.parts.length} pezzi · ${packed.sheets} fogli · geometria comune 3D / taglio. Mobile aperto sul retro.`,!!error);
+  let closureCount=0;try{closureCount=Object.keys(JSON.parse(params.frontConfig||'{}')).length}catch{}
+  notice(error||`Revisione ${revision} · ${current.parts.length} pezzi · ${packed.sheets} fogli · ${closureCount} vani attrezzati · geometria comune 3D / taglio.`,!!error);
   select(view.selected);
  }catch(e){current=packed=null;faces=[];notice(e.message,true);['metricPieces','metricCut'].forEach(k=>$(k).textContent='—');render3D();renderCut()}
  ['downloadSvg','downloadDxf'].forEach(k=>$(k).disabled=!packed);
