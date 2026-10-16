@@ -14,6 +14,17 @@ for(const angleL of [45,60,90,120,135])for(const angleR of [45,90,120])for(const
  const packed=G.pack(model.parts.map(p=>G.cutting(p,base.kerf)),{...p,sheetW:1800});assert.equal(packed.parts.length,model.parts.length);cases++;
 }
 for(const change of [{hinge:'left'},{hinge:'right'},{hinge:'both'},{parachute:'single'},{parachute:'double'},{shelves:0},{shelves:3,lip:25},{lipMode:'none'},{lipMode:'bottom'},{modules:2},{modules:3,angleL:90},{press:0},{kerf:.3}]){const p={...base,...change};G.build(p).parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++}
+{
+ const p={...base,modules:2,shelves:2,lipMode:'custom',lipConfig:JSON.stringify({'m1-p0':true,'m1-p2':true,'m1-p3':true,'m2-p1':true})};
+ const model=G.build(p),fronts=model.parts.filter(q=>q.key.startsWith('front-'));
+ assert.deepEqual(fronts.map(q=>`${q.module}:${q.key}`).sort(),['1:front-2','1:front-bottom','1:front-top','2:front-1'],'I frontalini devono seguire la selezione di ogni singolo livello');
+ const top=model.parts.find(q=>q.module===1&&q.key==='front-top');assert(top.v[2]<0,'Il frontalino alto deve scendere dal piano superiore');
+ model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
+}
+{
+ const p={...base,shelves:1,lipMode:'custom',lipConfig:JSON.stringify({'m1-p0':true,'m1-p1':true,'m1-p2':true}),frontConfig:JSON.stringify({'m1-b1':'drawer','m1-b2':'door-left'})};
+ assert.equal(G.build(p).parts.filter(q=>q.key.startsWith('front-')).length,0,'I frontalini non devono sovrapporsi a vani chiusi');cases++;
+}
 for(const modules of [2,3])for(const dovetailPolarity of ['positive','negative']){
  const p={...base,modules,moduleJoin:'dovetail',dovetailPolarity,dovetailCount:3,dovetailDepth:15};
  const model=G.build(p),sides=model.parts.filter(q=>['left','right'].includes(q.key)),horizontals=model.parts.filter(q=>['top','bottom','shelf-1'].includes(q.key));

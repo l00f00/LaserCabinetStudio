@@ -63,7 +63,7 @@ function validatePart(p){
  for(const hole of p.holes)if(area(hole)<=EPS||intersections(hole)||hole.some(q=>!contains(p.outline,q)))throw Error(p.name+': foro fuori dal pannello; riduci i fori o modifica le quote.');
 }
 function build(p){
- p={moduleJoin:'wall',dovetailPolarity:'positive',dovetailCount:3,dovetailDepth:15,frontConfig:'{}',frontGap:2,drawerClearance:2,drawerHeight:80,...p};
+ p={moduleJoin:'wall',dovetailPolarity:'positive',dovetailCount:3,dovetailDepth:15,lipConfig:'{}',frontConfig:'{}',frontGap:2,drawerClearance:2,drawerHeight:80,...p};
  for(const k of ['width','height','depth','thickness','kerf','modules','split','shelves','lip','angleL','angleR','parachuteDepth','hingeSize','hingeEdge','hingePitch','finger','press','dovetailCount','dovetailDepth','frontGap','drawerClearance','drawerHeight','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Inserisci un numero valido: '+k);
  if(p.finger<8||p.finger>80||p.lip<0||p.hingeSize<=0||p.hingePitch<=0||p.hingeEdge<=0||p.parachuteDepth<=0)throw Error('Passo dente: 8–80 mm. Controlla le quote dei frontalini e dei fori.');
  if(!Number.isInteger(p.modules)||p.split<20||p.split>80)throw Error('Numero moduli o divisione non validi.');
@@ -74,7 +74,8 @@ function build(p){
  if(!Number.isInteger(p.dovetailCount)||p.dovetailCount<1||p.dovetailCount>8||p.dovetailDepth<4||p.dovetailDepth>50)throw Error('Coda di rondine: usa 1–8 code e profondità 4–50 mm.');
  if(p.frontGap<.5||p.frontGap>8||p.drawerClearance<.5||p.drawerClearance>10||p.drawerHeight<30||p.drawerHeight>250)throw Error('Controlla giochi frontali e dimensioni del cassetto.');
  const t=p.thickness,H=p.height,D=p.depth,parts=[],joints=[],joined=p.moduleJoin==='dovetail'&&p.modules>1;
- let frontConfig={};try{frontConfig=typeof p.frontConfig==='string'?JSON.parse(p.frontConfig):p.frontConfig||{}}catch{throw Error('Configurazione sportelli e cassetti non valida.')}
+ let frontConfig={},lipConfig={};try{frontConfig=typeof p.frontConfig==='string'?JSON.parse(p.frontConfig):p.frontConfig||{}}catch{throw Error('Configurazione sportelli e cassetti non valida.')}
+ try{lipConfig=typeof p.lipConfig==='string'?JSON.parse(p.lipConfig):p.lipConfig||{}}catch{throw Error('Configurazione frontalini non valida.')}
  if(t*6>=Math.min(D,H))throw Error('Spessore eccessivo rispetto alle dimensioni.');
  const L=D/Math.tan(p.angleL*Math.PI/180),R=D/Math.tan(p.angleR*Math.PI/180);
  const widths=p.modules===1?[p.width]:p.modules===2?[p.width*p.split/100,p.width*(1-p.split/100)]:Array(3).fill(p.width/3);
@@ -87,6 +88,7 @@ function build(p){
   const lrev=reverseIntervals(left,lenL),withD=(a,d)=>a.map(([s,e])=>[s,e,d]);
   const x=originX,mid=mi+1,seams=p.dovetailPolarity==='positive'?{leftPiece:'male',rightPiece:'female'}:{leftPiece:'female',rightPiece:'male'};
   const closure=bay=>frontConfig[`m${mid}-b${bay}`]||'open',moduleHasClosures=Array.from({length:p.shelves+1},(_,i)=>closure(i+1)).some(v=>v!=='open');
+  const lipAt=level=>p.lip>0&&(p.lipMode==='custom'?!!lipConfig[`m${mid}-p${level}`]:p.lipMode==='all'||p.lipMode==='bottom'&&level===0||p.lipMode==='each'&&level>0&&level<=p.shelves);
   const make=(name,key,outline,holes,o,u,v,n)=>{const part={id:'M'+mid+'-'+key,module:mid,key,name:'M'+mid+' '+name,outline,holes,thickness:t,o,u,v,n};parts.push(part);return part};
   const horizontal=(name,key,z,shelf,front)=>{
    const rightKind=rightOuter?null:seams.leftPiece,leftKind=leftOuter?null:seams.rightPiece;
@@ -96,9 +98,9 @@ function build(p){
    return make(name+(mark?' · RONDINE '+mark:''),key,profile(base,specs),[],[x,0,z],[1,0,0],[0,1,0],[0,0,1]);
   };
   const frontStations=stations(W,p.finger,Math.max(4*t,Math.abs(leftBack)*t/D+4*t,Math.abs(rightBack)*t/D+4*t),p.joint);
-  const bottomLip=p.lip>0&&p.lipMode==='bottom'&&closure(1)==='open';
+  const bottomLip=lipAt(0)&&closure(1)==='open',topLip=lipAt(p.shelves+1)&&closure(p.shelves+1)==='open';
   const bottom=horizontal('BOTTOM','bottom',0,false,bottomLip?frontStations:null);
-  horizontal('TOP','top',H-t,false,null);
+  horizontal('TOP','top',H-t,false,topLip?frontStations:null);
   const sides={};
   const sideDefs=[];
   if(leftOuter)sideDefs.push(['left',lenL,left,[leftBack/lenL,D/lenL,0],[D/lenL,-leftBack/lenL,0],[x,0,0]]);
@@ -112,20 +114,21 @@ function build(p){
    sides[key]=make('SIDE '+key.toUpperCase(),key,outline,[],o,u,[0,0,1],n);
    joints.push({module:mid,side:key,length:len,stations:ss,depth:t});
   }
-  function addFront(label,key,z){
+  function addFront(label,key,z,down=false){
    if(p.lip<3*t)throw Error('Frontalino troppo basso: usa almeno tre volte lo spessore.');
    // Clear the full thickness of both angled walls, not just their centre lines.
    const a=leftOuter?t*(lenL+Math.max(leftBack,0))/D:0,b=rightOuter?t*(lenR+Math.max(rightBack,0))/D:0,span=W-a-b;
    const outline=profile(rect(0,0,span,p.lip+t),[{base:t,intervals:withD(frontStations.map(([s,e])=>[s-a,e-a]),0)},null,null,null]);
-   const front=make(label,key,outline,[],[x+a,0,z],[1,0,0],[0,0,1],[0,1,0]);
+   const front=make(label,key,outline,[],[x+a,0,z],[1,0,0],down?[0,0,-1]:[0,0,1],[0,1,0]);
    if(p.parachute!=='none'){
     const cw=p.parachuteDepth,ch=Math.min(10,p.lip/3),yc=t+p.lip/2;
     for(const f of p.parachute==='double'?[.28,.72]:[.5])front.holes.push(rect(span*f-cw/2,yc-ch/2,cw,ch));
    }return front;
   }
   if(bottomLip)addFront('FRONT BOTTOM','front-bottom',0);
+  if(topLip)addFront('FRONT TOP','front-top',H,true);
   for(let j=1;j<=p.shelves;j++){
-   const z=H*j/(p.shelves+1)-t/2,lip=p.lip>0&&p.lipMode==='each'&&closure(j+1)==='open';
+   const z=H*j/(p.shelves+1)-t/2,lip=lipAt(j)&&closure(j+1)==='open';
    if(z<t*2||z+t>H-t*2||lip&&z+p.lip+t>=H-t)throw Error('Ripiani o frontalini troppo ravvicinati.');
    horizontal('SHELF '+j,'shelf-'+j,z,true,lip?frontStations:null);
    for(const [key,ss] of [['left',left],['right',right]].filter(([key])=>sides[key]))for(const [a,b] of ss){

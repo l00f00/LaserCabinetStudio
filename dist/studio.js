@@ -1,10 +1,11 @@
 'use strict';
 const $=id=>document.getElementById(id), $$=q=>[...document.querySelectorAll(q)];
-const fields='project width height depth thickness kerf modules split shelves lip lipMode angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight sheetW sheetH gap'.split(' ');
-const words=new Set('project lipMode parachute joint hinge moduleJoin dovetailPolarity frontConfig'.split(' '));
+const fields='project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight sheetW sheetH gap'.split(' ');
+const words=new Set('project lipMode lipConfig parachute joint hinge moduleJoin dovetailPolarity frontConfig'.split(' '));
 const view={angle:-.7,tilt:.6,zoom:1,pan:[0,0],mode:'model',selected:'M1-left',sheet:0,explode:0,wire:false,cutZoom:1,cutPan:[0,0]};
 let current,packed,params,faces=[],revision=0;
 let compartmentSignature='';
+let lipSignature='';
 const fmt=n=>Number(n.toFixed(3)),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const path=(p,x=0,y=0)=>p.map((q,i)=>(i?'L':'M')+fmt(q[0]+x)+' '+fmt(q[1]+y)).join(' ')+' Z';
 const read=()=>Object.fromEntries(fields.map(k=>[k,words.has(k)?$(k).value:Number($(k).value)]));
@@ -20,10 +21,23 @@ function syncCompartments(p){
  $$('[data-compartment]').forEach(el=>el.onchange=()=>{let config={};try{config=JSON.parse($('frontConfig').value||'{}')}catch{}if(el.value==='open')delete config[el.dataset.compartment];else config[el.dataset.compartment]=el.value;$('frontConfig').value=JSON.stringify(config);update()});
  return true;
 }
+function syncLips(p){
+ const signature=`${p.modules}:${p.shelves}:${p.lipMode}:${p.frontConfig}`;if(signature===lipSignature)return false;lipSignature=signature;
+ let saved={},fronts={};try{saved=JSON.parse(p.lipConfig||'{}')}catch{}try{fronts=JSON.parse(p.frontConfig||'{}')}catch{}
+ const valid={},levels=Array.from({length:p.shelves+2},(_,level)=>({level,label:level===0?'Fondo':level===p.shelves+1?'Alto':`Ripiano ${level}`}));
+ const preset=(level)=>p.lipMode==='all'||p.lipMode==='bottom'&&level===0||p.lipMode==='each'&&level>0&&level<=p.shelves;
+ $('lipControls').innerHTML=Array.from({length:p.modules},(_,mi)=>{
+  const rows=levels.map(({level,label})=>{const key=`m${mi+1}-p${level}`,bay=level===p.shelves+1?p.shelves+1:level+1,closed=!!fronts[`m${mi+1}-b${bay}`],checked=p.lipMode==='custom'?!!saved[key]:preset(level);if(checked)valid[key]=true;return `<label class="lip-switch${closed?' closed':''}" title="${closed?'Disattivato perché il vano ha una chiusura':''}"><span>${label}</span><input type="checkbox" data-lip="${key}"${checked?' checked':''}${closed?' disabled':''}></label>`}).join('');
+  return `<div class="lip-module"><strong>MODULO ${mi+1}</strong>${rows}</div>`;
+ }).join('');
+ $('lipConfig').value=JSON.stringify(valid);
+ $$('[data-lip]').forEach(el=>el.onchange=()=>{let config={};try{config=JSON.parse($('lipConfig').value||'{}')}catch{}if(el.checked)config[el.dataset.lip]=true;else delete config[el.dataset.lip];$('lipConfig').value=JSON.stringify(config);$('lipMode').value='custom';update()});
+ return true;
+}
 function notice(s,error=false){$('validation').textContent=s;$('validation').classList.toggle('error',error)}
 function select(id){view.selected=id;$('wallSelect').value=id;const p=current?.parts.find(p=>p.id===id);$('selectedWall').textContent=p?.name||'—';['angleL','angleR'].forEach((k,i)=>$(k).closest('label').classList.toggle('selected-field',p?.key===(i?'right':'left')));render3D();renderCut()}
 function update(){
- revision++;params=read();if(syncCompartments(params))params=read();let error='';
+ revision++;params=read();if(syncCompartments(params))params=read();if(syncLips(params))params=read();let error='';
  ['width','height','depth','split'].forEach(k=>$(k+'Out').textContent=params[k]+(k==='split'?' %':' mm'));
  $('splitWrap').hidden=params.modules!==2;
  $('hingeFields').hidden=params.hinge==='none';

@@ -32,7 +32,10 @@
         <label>Moduli<select id="modules"><option value="1" selected>1 modulo</option><option value="2">2 moduli</option><option value="3">3 moduli</option></select></label>
         <div id="splitWrap"><label>Divisione larghezza <output id="splitOut"></output><input id="split" type="range" min="20" max="80" value="44"></label></div>
         <div class="row"><label>Ripiani per modulo<input id="shelves" type="number" min="0" max="6" value="1"></label><label>Frontalino<input id="lip" type="number" min="0" max="180" value="55"></label></div>
-        <label>Posizione frontalino<select id="lipMode"><option value="each" selected>Su ogni ripiano</option><option value="bottom">Solo in basso</option><option value="none">Nessuno</option></select></label>
+        <label>Preset frontalini<select id="lipMode"><option value="each" selected>Su ogni ripiano</option><option value="all">Fondo, ripiani e alto</option><option value="bottom">Solo in basso</option><option value="none">Nessuno</option><option value="custom">Personalizzato</option></select></label>
+        <input id="lipConfig" type="hidden" value="{}">
+        <div id="lipControls" class="lip-list"></div>
+        <p>Attiva o disattiva il frontalino su fondo, singoli ripiani e bordo alto. Nei vani con sportello o cassetto il frontalino non viene generato.</p>
       </div></details>
 
       <details open><summary>03 · Angoli e frontali</summary><div class="fields">
