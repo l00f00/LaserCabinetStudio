@@ -47,11 +47,22 @@ for(const modules of [2,3])for(const dovetailPolarity of ['positive','negative']
 }
 {
  const p={...base,angleL:45,angleR:120,shelves:1,frontConfig:JSON.stringify({'m1-b1':'drawer'})};
- const model=G.build(p),left=model.parts.find(q=>q.key==='drawer-b1-side-l'),right=model.parts.find(q=>q.key==='drawer-b1-side-r'),back=model.parts.find(q=>q.key==='drawer-b1-back'),front=model.parts.find(q=>q.key==='drawer-b1-front');
+ const model=G.build(p),left=model.parts.find(q=>q.key==='drawer-b1-c1-side-l'),right=model.parts.find(q=>q.key==='drawer-b1-c1-side-r'),back=model.parts.find(q=>q.key==='drawer-b1-c1-back'),front=model.parts.find(q=>q.key==='drawer-b1-c1-front');
  assert(Math.abs(left.u[0])>.1,'Il fianco sinistro del cassetto deve seguire il lato inclinato del ripiano');
  assert(Math.abs(right.u[0])>.1,'Il fianco destro del cassetto deve seguire il lato inclinato del ripiano');
  assert.notEqual(Number(CabinetWidth(left).toFixed(3)),Number(CabinetWidth(right).toFixed(3)),'Le profondità laterali devono essere calcolate separatamente');
  assert(CabinetWidth(back)<CabinetWidth(front),'La schiena del cassetto rastremato deve seguire la larghezza posteriore del vano');
+ model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
+}
+{
+ const config={'m1-b1':{columns:2,partitions:true,items:[{type:'drawer',handle:'round',dividers:1},{type:'drawer',handle:'square',dividers:2}]},'m1-b2':{columns:2,partitions:true,items:[{type:'door',hinge:'left',dividers:1},{type:'door',hinge:'right',dividers:0}]}};
+ const p={...base,angleL:90,angleR:90,frontConfig:JSON.stringify(config),handleSize:24},model=G.build(p),drawerFronts=model.parts.filter(q=>q.key.match(/^drawer-b1-c\d-front$/)),doors=model.parts.filter(q=>q.key.match(/^door-b2-c\d$/));
+ assert.equal(drawerFronts.length,2,'Un vano deve poter contenere più cassetti affiancati');
+ assert.equal(doors.length,2,'Un vano deve poter contenere più sportelli affiancati');
+ assert.equal(drawerFronts[0].holes[0].length,32,'Il foro tondo deve essere esportato come cerchio');assert.equal(drawerFronts[1].holes[0].length,4,'Il foro quadrato deve avere quattro lati');
+ assert.equal(model.parts.filter(q=>q.key.startsWith('wall-b')).length,2,'Le pareti interne devono essere generate per ogni vano configurato');
+ assert.equal(model.parts.filter(q=>q.key.includes('drawer-b1')&&q.key.includes('divider')).length,3,'I divisori interni dei cassetti devono essere parametrici');
+ assert.equal(model.parts.filter(q=>q.key.startsWith('divider-b2')).length,1,'I divisori verticali dietro gli sportelli devono essere generati');
  model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
 }
 {

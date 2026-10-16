@@ -18,6 +18,7 @@
       <section class="intro">
         <div class="eyebrow">PROGETTO</div>
         <input id="project" class="project" value="Mobiletto camper">
+        <label class="example-picker">Esempio iniziale<select id="examplePreset"><option value="">Scegli un esempio…</option><option value="base">Mobiletto camper base</option><option value="corner">Angolare 45° · 2 ripiani</option><option value="drawers">Cassettiera 250 × 600 × 300</option><option value="kitchen">Pensile cucina misto</option></select></label>
         <p>Modifica una quota: modello, incastri e piano di taglio si aggiornano insieme.</p>
       </section>
 
@@ -64,12 +65,12 @@
       </div></details>
 
       <details open><summary>05 · Sportelli e cassetti</summary><div class="fields">
-        <p>Assegna una chiusura a ogni vano. “Vano 1” appoggia sul fondo; i successivi appoggiano sui rispettivi ripiani.</p>
+        <p>Ogni vano può contenere fino a quattro elementi affiancati: sportelli, cassetti o spazi aperti.</p>
         <input id="frontConfig" type="hidden" value="{}">
         <div id="compartmentControls" class="compartment-list"></div>
         <div class="row"><label>Gioco frontale<input id="frontGap" type="number" min="0.5" max="8" step="0.1" value="2"></label><label>Gioco cassetto<input id="drawerClearance" type="number" min="0.5" max="10" step="0.1" value="2"></label></div>
-        <label>Altezza sponde cassetto<input id="drawerHeight" type="number" min="30" max="250" step="5" value="80"></label>
-        <div class="join-note">Sportelli e frontali riempiono il vano scelto. Il cassetto aggiunge frontale, fondo, due fianchi e schiena con incastri laser.</div>
+        <div class="row"><label>Altezza sponde<input id="drawerHeight" type="number" min="30" max="250" step="5" value="80"></label><label>Foro maniglia<input id="handleSize" type="number" min="10" max="80" step="1" value="28"></label></div>
+        <div class="join-note">Le pareti interne separano gli elementi. I divisori dei cassetti attraversano la profondità; quelli degli sportelli dividono verticalmente il vano.</div>
       </div></details>
 
       <details><summary>06 · Foglio e progetto</summary><div class="fields">
