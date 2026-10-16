@@ -9,6 +9,7 @@ const dist=(a,b)=>Math.hypot(...sub(a,b));
 const area=p=>p.reduce((s,a,i)=>s+cross(a,p[(i+1)%p.length]),0)/2;
 const rect=(x,y,w,h)=>[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
 const circle=(cx,cy,r)=>Array.from({length:32},(_,i)=>[cx+r*Math.cos(i*Math.PI/16),cy+r*Math.sin(i*Math.PI/16)]);
+const ellipse=(cx,cy,rx,ry)=>Array.from({length:40},(_,i)=>[cx+rx*Math.cos(i*Math.PI/20),cy+ry*Math.sin(i*Math.PI/20)]);
 const lerp=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
 function clean(p){return p.filter((q,i)=>dist(q,p[(i+p.length-1)%p.length])>EPS)}
 function lineMeet(p,u,q,v){const den=cross(u,v);return Math.abs(den)<EPS?p:add(p,mul(u,cross(sub(q,p),v)/den))}
@@ -59,7 +60,7 @@ function baySetup(raw){
   return {columns:1,partitions:false,items:[item()]};
  }
  const columns=Math.max(1,Math.min(4,Math.round(Number(raw?.columns)||1))),source=Array.isArray(raw?.items)?raw.items:[];
- const items=Array.from({length:columns},(_,i)=>{const v=source[i]||{};return item(['door','drawer'].includes(v.type)?v.type:'open',{hinge:v.hinge==='right'?'right':'left',handle:['round','square'].includes(v.handle)?v.handle:'none',dividers:Math.max(0,Math.min(4,Math.round(Number(v.dividers)||0)))});});
+ const items=Array.from({length:columns},(_,i)=>{const v=source[i]||{},handle=v.handle==='square'?'rect':v.handle;return item(['door','drawer'].includes(v.type)?v.type:'open',{hinge:v.hinge==='right'?'right':'left',handle:['round','ellipse','rect'].includes(handle)?handle:'none',dividers:Math.max(0,Math.min(4,Math.round(Number(v.dividers)||0)))});});
  return {columns,partitions:!!raw?.partitions,items};
 }
 function clipHalf(poly,axis,cut,keepLow){
@@ -102,8 +103,8 @@ function validatePart(p){
  for(const hole of p.holes)if(area(hole)<=EPS||intersections(hole)||hole.some(q=>!contains(p.outline,q)))throw Error(p.name+': foro fuori dal pannello; riduci i fori o modifica le quote.');
 }
 function build(p){
- p={moduleJoin:'wall',dovetailPolarity:'positive',dovetailCount:3,dovetailDepth:15,lipConfig:'{}',frontConfig:'{}',frontGap:2,drawerClearance:2,drawerHeight:80,handleSize:28,...p};
- for(const k of ['width','height','depth','thickness','kerf','modules','split','shelves','lip','angleL','angleR','parachuteDepth','hingeSize','hingeEdge','hingePitch','finger','press','dovetailCount','dovetailDepth','frontGap','drawerClearance','drawerHeight','handleSize','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Inserisci un numero valido: '+k);
+ p={moduleJoin:'wall',dovetailPolarity:'positive',dovetailCount:3,dovetailDepth:15,lipConfig:'{}',frontConfig:'{}',frontGap:2,drawerClearance:2,drawerHeight:80,handleSize:32,handleHeight:16,...p};
+ for(const k of ['width','height','depth','thickness','kerf','modules','split','shelves','lip','angleL','angleR','parachuteDepth','hingeSize','hingeEdge','hingePitch','finger','press','dovetailCount','dovetailDepth','frontGap','drawerClearance','drawerHeight','handleSize','handleHeight','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Inserisci un numero valido: '+k);
  if(p.finger<8||p.finger>80||p.lip<0||p.hingeSize<=0||p.hingePitch<=0||p.hingeEdge<=0||p.parachuteDepth<=0)throw Error('Passo dente: 8–80 mm. Controlla le quote dei frontalini e dei fori.');
  if(!Number.isInteger(p.modules)||p.split<20||p.split>80)throw Error('Numero moduli o divisione non validi.');
  for(const k of ['width','height','depth','thickness','finger','sheetW','sheetH','gap'])if(!Number.isFinite(p[k])||p[k]<=0)throw Error('Quota non valida: '+k);
@@ -111,7 +112,7 @@ function build(p){
  if(p.angleL<45||p.angleL>135||p.angleR<45||p.angleR>135)throw Error('Angoli ammessi: da 45° a 135°.');
  if(p.modules<1||p.modules>3||p.shelves<0||p.shelves>6||!Number.isInteger(p.shelves))throw Error('Controlla il numero di moduli e ripiani.');
  if(!Number.isInteger(p.dovetailCount)||p.dovetailCount<1||p.dovetailCount>8||p.dovetailDepth<4||p.dovetailDepth>50)throw Error('Coda di rondine: usa 1–8 code e profondità 4–50 mm.');
- if(p.frontGap<.5||p.frontGap>8||p.drawerClearance<.5||p.drawerClearance>10||p.drawerHeight<30||p.drawerHeight>250||p.handleSize<10||p.handleSize>80)throw Error('Controlla giochi frontali, maniglia e dimensioni del cassetto.');
+ if(p.frontGap<.5||p.frontGap>8||p.drawerClearance<.5||p.drawerClearance>10||p.drawerHeight<30||p.drawerHeight>250||p.handleSize<10||p.handleSize>120||p.handleHeight<6||p.handleHeight>80)throw Error('Controlla giochi frontali, maniglia e dimensioni del cassetto.');
  const t=p.thickness,H=p.height,D=p.depth,parts=[],joints=[],joined=p.moduleJoin==='dovetail'&&p.modules>1;
  let frontConfig={},lipConfig={};try{frontConfig=typeof p.frontConfig==='string'?JSON.parse(p.frontConfig):p.frontConfig||{}}catch{throw Error('Configurazione sportelli e cassetti non valida.')}
  try{lipConfig=typeof p.lipConfig==='string'?JSON.parse(p.lipConfig):p.lipConfig||{}}catch{throw Error('Configurazione frontalini non valida.')}
@@ -177,10 +178,14 @@ function build(p){
   }
   const clearA=leftOuter?t*(lenL+Math.max(leftBack,0))/D:0,clearB=rightOuter?t*(lenR+Math.max(rightBack,0))/D:0;
   const shelfBottom=j=>H*j/(p.shelves+1)-t/2,shelfTop=j=>shelfBottom(j)+t;
-  const addDoor=(label,key,doorX,doorZ,doorW,doorH,hingeSide,mountOuter=true)=>{
+  const handleHole=(kind,cx,cy)=>kind==='round'?circle(cx,cy,p.handleSize/2):kind==='ellipse'?ellipse(cx,cy,p.handleSize/2,p.handleHeight/2):kind==='rect'?rect(cx-p.handleSize/2,cy-p.handleHeight/2,p.handleSize,p.handleHeight):null;
+  const handleHalfHeight=kind=>kind==='round'?p.handleSize/2:p.handleHeight/2;
+  const checkHandle=(kind,w,h)=>{if(kind!=='none'&&(p.handleSize>w-4*p.frontGap||Math.max(p.handleSize,p.handleHeight)>h-4*p.frontGap))throw Error(`M${mid}: foro maniglia troppo grande.`)};
+  const addDoor=(label,key,doorX,doorZ,doorW,doorH,hingeSide,handleType='none',mountOuter=true)=>{
    if(doorW<6*t||doorH<6*t)throw Error(`M${mid}: vano troppo piccolo per lo sportello.`);
    const holes=[],radius=p.hingeSize/2,edge=Math.min(p.hingeEdge,doorW/3),zInset=Math.min(Math.max(2*p.hingeSize,18),doorH/3);
    for(const z of [zInset,doorH-zInset])holes.push(circle(hingeSide==='left'?edge:doorW-edge,z,radius));
+   checkHandle(handleType,doorW,doorH);const handleX=hingeSide==='left'?doorW-Math.max(p.handleSize*.75,18):Math.max(p.handleSize*.75,18),handle=handleHole(handleType,handleX,doorH/2);if(handle)holes.push(handle);
    const door=make(label,key,rect(0,0,doorW,doorH),holes,[doorX,-t-2,doorZ],[1,0,0],[0,0,1],[0,1,0]);
    const side=mountOuter?sides[hingeSide]:null;if(side)for(const z of [doorZ+zInset,doorZ+doorH-zInset])side.holes.push(circle(Math.min(p.hingeEdge,D/3),z,radius));
    return door;
@@ -207,7 +212,7 @@ function build(p){
     const itemX=doorX+index*(columnW+g),itemKey=`b${bay}-c${index+1}`;
     if(item.type==='door'){
      const outerHinge=item.hinge==='left'?index===0:index===config.columns-1;
-     addDoor(`DOOR VANO ${bay}.${index+1} · ${item.hinge==='left'?'SX':'DX'}`,`door-${itemKey}`,itemX,doorZ,columnW,doorH,item.hinge,outerHinge);
+     addDoor(`DOOR VANO ${bay}.${index+1} · ${item.hinge==='left'?'SX':'DX'}`,`door-${itemKey}`,itemX,doorZ,columnW,doorH,item.hinge,item.handle,outerHinge);
      for(let j=1;j<=item.dividers;j++)addVerticalWall(bay,(index+j/(item.dividers+1))/config.columns,`divider-${itemKey}-${j}`,`DIVIDER VANO ${bay}.${index+1} · ${j}`);
      return;
     }
@@ -224,8 +229,7 @@ function build(p){
     const rightOutline=profile(rect(0,0,rightD,wallH),[{base:t,intervals:wd(alongRight,0)},null,null,null]);
     const backOutline=profile(rect(0,0,backW,wallH),[{base:t,intervals:wd(alongBack,0)},null,null,null]);
     const leftU=mul(sub(bl,fl),1/leftD),rightU=mul(sub(br,fr),1/rightD),backU=mul(sub(br,bl),1/backW);
-    const handleY=doorH-Math.max(p.handleSize*.75,12),frontHoles=item.handle==='round'?[circle(columnW/2,handleY,p.handleSize/2)]:item.handle==='square'?[rect(columnW/2-p.handleSize/2,handleY-p.handleSize/2,p.handleSize,p.handleSize)]:[];
-    if(frontHoles.length&&(p.handleSize>columnW-4*g||p.handleSize>doorH-4*g))throw Error(`M${mid} vano ${bay}: foro maniglia troppo grande.`);
+    const handleY=doorH-Math.max(handleHalfHeight(item.handle)+2*g,12);checkHandle(item.handle,columnW,doorH);const handle=handleHole(item.handle,columnW/2,handleY),frontHoles=handle?[handle]:[];
     make(`DRAWER VANO ${bay}.${index+1} · FRONT`,`drawer-${itemKey}-front`,rect(0,0,columnW,doorH),frontHoles,[itemX,-t-2,doorZ],[1,0,0],[0,0,1],[0,1,0]);
     const bottomPart=make(`DRAWER VANO ${bay}.${index+1} · BOTTOM SAGOMATO`,`drawer-${itemKey}-bottom`,bottomOutline,[],[x,0,boxZ],[1,0,0],[0,1,0],[0,0,1]);
     make(`DRAWER VANO ${bay}.${index+1} · SIDE L`,`drawer-${itemKey}-side-l`,leftOutline,[],[x+fl[0],fl[1],boxZ+t],[leftU[0],leftU[1],0],[0,0,1],[leftU[1],-leftU[0],0]);

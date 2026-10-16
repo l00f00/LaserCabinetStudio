@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Laser Cabinet Studio</title>
   <meta name="description" content="Configuratore parametrico per mobili laser con incastri, ripiani e frontalini.">
-  <link rel="stylesheet" href="styles.css?v=dovetail-1">
-  <link rel="stylesheet" href="corner.css?v=dovetail-1">
+  <link rel="stylesheet" href="styles.css?v=1.0.0">
+  <link rel="stylesheet" href="corner.css?v=1.0.0">
 </head>
 <body>
   <header>
-    <div class="brand"><span class="logo">L</span><div><strong>Laser Cabinet Studio</strong><small>mobili parametrici per taglio laser</small></div></div>
-    <div class="status"><span></span> calcolo locale · nessun account</div>
+    <div class="brand"><span class="logo">L</span><div><strong>Laser Cabinet Studio <em class="version">v1</em></strong><small>mobili parametrici per taglio laser</small></div></div>
+    <div class="header-actions"><button id="supportCoffee" class="coffee" type="button">☕ Offrimi un caffè</button><div class="status"><span></span> calcolo locale · nessun account</div></div>
   </header>
   <main>
     <aside>
@@ -69,7 +69,8 @@
         <input id="frontConfig" type="hidden" value="{}">
         <div id="compartmentControls" class="compartment-list"></div>
         <div class="row"><label>Gioco frontale<input id="frontGap" type="number" min="0.5" max="8" step="0.1" value="2"></label><label>Gioco cassetto<input id="drawerClearance" type="number" min="0.5" max="10" step="0.1" value="2"></label></div>
-        <div class="row"><label>Altezza sponde<input id="drawerHeight" type="number" min="30" max="250" step="5" value="80"></label><label>Foro maniglia<input id="handleSize" type="number" min="10" max="80" step="1" value="28"></label></div>
+        <label>Altezza sponde<input id="drawerHeight" type="number" min="30" max="250" step="5" value="80"></label>
+        <div class="row"><label>Maniglia larghezza / Ø<input id="handleSize" type="number" min="10" max="120" step="1" value="32"></label><label>Maniglia altezza<input id="handleHeight" type="number" min="6" max="80" step="1" value="16"></label></div>
         <div class="join-note">Le pareti interne separano gli elementi. I divisori dei cassetti attraversano la profondità; quelli degli sportelli dividono verticalmente il vano.</div>
       </div></details>
 
@@ -101,7 +102,8 @@
     </section>
   </main>
   <div id="toast" role="status"></div>
-  <script src="geometry.js?v=dovetail-1"></script>
-  <script src="studio.js?v=dovetail-1"></script>
+  <script src="config.js?v=1.0.0"></script>
+  <script src="geometry.js?v=1.0.0"></script>
+  <script src="studio.js?v=1.0.0"></script>
 </body>
 </html>

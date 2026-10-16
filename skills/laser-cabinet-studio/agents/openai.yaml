@@ -1,0 +1,4 @@
+interface:
+  display_name: "Laser Cabinet Studio"
+  short_description: "Progetta mobili parametrici per taglio laser"
+  default_prompt: "Use $laser-cabinet-studio to turn my cabinet sketch into validated laser-cut parameters and a nested cut plan."

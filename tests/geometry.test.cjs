@@ -55,11 +55,12 @@ for(const modules of [2,3])for(const dovetailPolarity of ['positive','negative']
  model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
 }
 {
- const config={'m1-b1':{columns:2,partitions:true,items:[{type:'drawer',handle:'round',dividers:1},{type:'drawer',handle:'square',dividers:2}]},'m1-b2':{columns:2,partitions:true,items:[{type:'door',hinge:'left',dividers:1},{type:'door',hinge:'right',dividers:0}]}};
- const p={...base,angleL:90,angleR:90,frontConfig:JSON.stringify(config),handleSize:24},model=G.build(p),drawerFronts=model.parts.filter(q=>q.key.match(/^drawer-b1-c\d-front$/)),doors=model.parts.filter(q=>q.key.match(/^door-b2-c\d$/));
+ const config={'m1-b1':{columns:2,partitions:true,items:[{type:'drawer',handle:'round',dividers:1},{type:'drawer',handle:'rect',dividers:2}]},'m1-b2':{columns:2,partitions:true,items:[{type:'door',hinge:'left',handle:'ellipse',dividers:1},{type:'door',hinge:'right',handle:'rect',dividers:0}]}};
+ const p={...base,angleL:90,angleR:90,frontConfig:JSON.stringify(config),handleSize:24,handleHeight:12},model=G.build(p),drawerFronts=model.parts.filter(q=>q.key.match(/^drawer-b1-c\d-front$/)),doors=model.parts.filter(q=>q.key.match(/^door-b2-c\d$/));
  assert.equal(drawerFronts.length,2,'Un vano deve poter contenere più cassetti affiancati');
  assert.equal(doors.length,2,'Un vano deve poter contenere più sportelli affiancati');
- assert.equal(drawerFronts[0].holes[0].length,32,'Il foro tondo deve essere esportato come cerchio');assert.equal(drawerFronts[1].holes[0].length,4,'Il foro quadrato deve avere quattro lati');
+ assert.equal(drawerFronts[0].holes[0].length,32,'Il foro tondo deve essere esportato come cerchio');assert.equal(drawerFronts[1].holes[0].length,4,'L’asola rettangolare deve avere quattro lati');
+ assert.equal(doors[0].holes[2].length,40,'La maniglia ellittica deve essere generata anche sugli sportelli');assert.equal(doors[1].holes[2].length,4,'La maniglia rettangolare deve essere generata anche sugli sportelli');
  assert.equal(model.parts.filter(q=>q.key.startsWith('wall-b')).length,2,'Le pareti interne devono essere generate per ogni vano configurato');
  assert.equal(model.parts.filter(q=>q.key.includes('drawer-b1')&&q.key.includes('divider')).length,3,'I divisori interni dei cassetti devono essere parametrici');
  assert.equal(model.parts.filter(q=>q.key.startsWith('divider-b2')).length,1,'I divisori verticali dietro gli sportelli devono essere generati');
