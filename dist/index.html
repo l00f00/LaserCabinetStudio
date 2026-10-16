@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Laser Cabinet Studio</title>
   <meta name="description" content="Configuratore parametrico per mobili laser con incastri, ripiani e frontalini.">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="corner.css">
+  <link rel="stylesheet" href="styles.css?v=dovetail-1">
+  <link rel="stylesheet" href="corner.css?v=dovetail-1">
 </head>
 <body>
   <header>
@@ -29,41 +29,32 @@
       </div></details>
 
       <details open><summary>02 · Struttura</summary><div class="fields">
-        <label>Moduli<select id="modules"><option value="1">1 modulo</option><option value="2" selected>2 moduli</option><option value="3">3 moduli</option></select></label>
+        <label>Moduli<select id="modules"><option value="1" selected>1 modulo</option><option value="2">2 moduli</option><option value="3">3 moduli</option></select></label>
         <div id="splitWrap"><label>Divisione larghezza <output id="splitOut"></output><input id="split" type="range" min="20" max="80" value="44"></label></div>
         <div class="row"><label>Ripiani per modulo<input id="shelves" type="number" min="0" max="6" value="1"></label><label>Frontalino<input id="lip" type="number" min="0" max="180" value="55"></label></div>
         <label>Posizione frontalino<select id="lipMode"><option value="each" selected>Su ogni ripiano</option><option value="bottom">Solo in basso</option><option value="none">Nessuno</option></select></label>
       </div></details>
 
-      <details open><summary>03 · Giunto angolare</summary><div class="fields">
-        <label>Lato inclinato<select id="cornerPair">
-          <option value="none" selected>Nessuno · box rettangolare</option>
-          <option value="m1r-m2l">M1 destra ↔ M2 sinistra</option>
-          <option value="m1l-m2r">M1 sinistra ↔ M2 destra</option>
-          <option value="m1l">Solo modulo 1 · sinistra</option>
-          <option value="m1r">Solo modulo 1 · destra</option>
-          <option value="m2l">Solo modulo 2 · sinistra</option>
-          <option value="m2r">Solo modulo 2 · destra</option>
-        </select></label>
-        <label>Angolo del fianco<select id="cornerAngle"><option value="45" selected>45° · coppia a 90°</option></select></label>
-        <div class="corner-note" id="cornerNote">Il fianco selezionato diventa diagonale; top, fondo, ripiani e incastri vengono ricalcolati.</div>
+      <details open><summary>03 · Angoli e frontali</summary><div class="fields">
+        <label>Parete selezionata<select id="wallSelect"><option value="left" selected>Parete laterale sinistra</option><option value="right">Parete laterale destra</option><option value="top">Piano superiore</option><option value="bottom">Piano inferiore</option></select></label>
+        <div class="fit"><span>Selezione 3D</span><strong id="selectedWall">Sinistra</strong></div>
+        <div class="row"><label>Angolo lato sinistro<input id="angleL" type="number" min="45" max="135" step="0.5" value="45"></label><label>Angolo lato destro<input id="angleR" type="number" min="45" max="135" step="0.5" value="90"></label></div>
+        <label>Aperture nel frontalino<select id="parachute"><option value="none" selected>Nessuna</option><option value="single">Una apertura</option><option value="double">Doppia apertura</option></select></label>
+        <label>Larghezza apertura<input id="parachuteDepth" type="number" min="10" max="100" value="35"></label>
+        <div class="fit"><span>Offset angoli</span><strong id="angleValue">0 / 0 mm</strong></div>
       </div></details>
 
-      <details open><summary>04 · Incastro</summary><div class="fields">
-        <label>Tipo<select id="joint"><option value="tab" selected>Linguetta + asola</option><option value="finger">Denti a pettine</option></select></label>
-        <div class="row"><label>Passo dente<input id="finger" type="number" min="8" max="80" value="24"></label><label>Pressione<input id="press" type="number" step="0.01" value="0.05"></label></div>
-        <label class="check"><input id="dogbone" type="checkbox"> Scarichi angolo (CNC, non laser)</label>
-        <div class="fit"><span>Asola calcolata</span><strong id="slotValue">4,85 mm</strong></div>
+      <details open><summary>04 · Incastro e ferramenta</summary><div class="fields">
+        <label>Tipo<select id="joint"><option value="tab">Linguetta + asola</option><option value="finger" selected>Finger joint · denti a pettine</option></select></label>
+        <label>Cerniere<select id="hinge"><option value="none" selected>Nessuna</option><option value="left">A sinistra</option><option value="right">A destra</option><option value="both">Su entrambi i lati</option></select></label>
+        <div id="hingeFields"><p>Anta e fori per cerniere esterne. Verifica le quote sulla ferramenta: non è una cerniera tagliata a laser.</p><label>Foro fissaggio Ø<input id="hingeSize" type="number" min="1" max="20" step="0.1" value="3"></label><label>Interasse fori<input id="hingePitch" type="number" min="5" value="32"></label><label>Distanza dal bordo<input id="hingeEdge" type="number" min="3" value="12"></label></div>
+        <div class="row"><label>Passo dente<input id="finger" type="number" min="8" max="80" value="24"></label><label>Interferenza<input id="press" type="number" step="0.01" value="0.05"></label></div>
+        <p>Profondità denti = spessore. Il kerf è applicato ai tracciati di taglio. Esegui sempre un provino per la pressione d’incastro.</p>
+        <div class="fit"><span>Asola calcolata</span><strong id="slotValue">4,95 mm nominali</strong></div>
         <div class="field-divider"><span>UNIONE TRA MODULI</span></div>
-        <label>Collegamento<select id="moduleJoin">
-          <option value="wall" selected>Parete mediana</option>
-          <option value="dovetail">Coda di rondine · senza parete</option>
-        </select></label>
+        <label>Collegamento<select id="moduleJoin"><option value="wall" selected>Parete mediana</option><option value="dovetail">Coda di rondine · senza parete</option></select></label>
         <div id="dovetailOptions" class="nested-options">
-          <label>Polarità primo modulo<select id="dovetailPolarity">
-            <option value="positive" selected>Positivo / maschio → negativo</option>
-            <option value="negative">Negativo / femmina → positivo</option>
-          </select></label>
+          <label>Polarità primo modulo<select id="dovetailPolarity"><option value="positive" selected>Positivo / maschio → negativo</option><option value="negative">Negativo / femmina → positivo</option></select></label>
           <div class="row"><label>Code per giunto<input id="dovetailCount" type="number" min="1" max="8" step="1" value="3"></label><label>Profondità<input id="dovetailDepth" type="number" min="4" max="50" step="1" value="15"></label></div>
           <div class="join-note" id="dovetailNote">Top, fondo e ripiani vengono divisi in pannelli complementari. Le pareti interne sono eliminate.</div>
         </div>
@@ -81,17 +72,20 @@
         <div class="tabs"><button class="tab active" data-view="model">Modello 3D</button><button class="tab" data-view="cut">Piano di taglio</button></div>
         <div class="view-actions"><button id="resetView" class="ghost">Centra</button><button id="downloadSvg" class="primary">Scarica SVG</button><button id="downloadDxf" class="secondary">DXF</button></div>
       </div>
-      <div id="modelView" class="viewport"><canvas id="model"></canvas><div class="hint">trascina per ruotare · rotella per zoom</div></div>
-      <div id="cutView" class="viewport hidden"><svg id="cutPreview" aria-label="Anteprima del piano di taglio"></svg><div class="hint">rosso: taglio · blu: incisione</div></div>
+      <div class="view-controls"><button id="isoView">Prospettiva</button><button id="topView">Dall'alto</button><label>Esploso <input id="explode" type="range" min="0" max="100" value="0"></label><label><input id="wire" type="checkbox"> Trasparente</label><select id="sheetSelect" aria-label="Foglio di taglio" hidden></select></div>
+      <div id="validation" role="status" aria-live="polite"></div>
+      <div id="modelView" class="viewport"><canvas id="model"></canvas><div class="hint">clic: seleziona · trascina: ruota · Maiusc + trascina: sposta · rotella: zoom</div></div>
+      <div id="cutView" class="viewport hidden"><svg id="cutPreview" aria-label="Anteprima del piano di taglio"></svg><div class="hint">rosso: taglio · etichette solo anteprima · esportazione del foglio selezionato · Maiusc + trascina: sposta</div></div>
       <div class="metrics">
         <div><small>Ingombro</small><strong id="metricSize">900 × 500 × 150</strong><span>mm</span></div>
         <div><small>Pezzi</small><strong id="metricPieces">—</strong><span>componenti</span></div>
-        <div><small>Moduli</small><strong id="metricModules">2</strong><span>indipendenti</span></div>
+        <div><small>Moduli</small><strong id="metricModules">1</strong><span id="metricModuleMode">indipendenti</span></div>
         <div><small>Taglio stimato</small><strong id="metricCut">—</strong><span>metri</span></div>
       </div>
     </section>
   </main>
   <div id="toast" role="status"></div>
-  <script src="app.js"></script>
+  <script src="geometry.js?v=dovetail-1"></script>
+  <script src="studio.js?v=dovetail-1"></script>
 </body>
 </html>
