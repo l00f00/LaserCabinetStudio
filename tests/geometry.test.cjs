@@ -35,9 +35,20 @@ for(const modules of [2,3])for(const dovetailPolarity of ['positive','negative']
  model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
 }
 {
+ const p={...base,angleL:45,angleR:120,shelves:1,frontConfig:JSON.stringify({'m1-b1':'drawer'})};
+ const model=G.build(p),left=model.parts.find(q=>q.key==='drawer-b1-side-l'),right=model.parts.find(q=>q.key==='drawer-b1-side-r'),back=model.parts.find(q=>q.key==='drawer-b1-back'),front=model.parts.find(q=>q.key==='drawer-b1-front');
+ assert(Math.abs(left.u[0])>.1,'Il fianco sinistro del cassetto deve seguire il lato inclinato del ripiano');
+ assert(Math.abs(right.u[0])>.1,'Il fianco destro del cassetto deve seguire il lato inclinato del ripiano');
+ assert.notEqual(Number(CabinetWidth(left).toFixed(3)),Number(CabinetWidth(right).toFixed(3)),'Le profondità laterali devono essere calcolate separatamente');
+ assert(CabinetWidth(back)<CabinetWidth(front),'La schiena del cassetto rastremato deve seguire la larghezza posteriore del vano');
+ model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
+}
+{
  const p={...base,modules:2,moduleJoin:'dovetail',dovetailPolarity:'positive',dovetailCount:3,dovetailDepth:15,frontGap:2,drawerClearance:2,drawerHeight:60,frontConfig:JSON.stringify({'m1-b1':'drawer','m2-b2':'door-right'})};
  const model=G.build(p);assert.equal(model.parts.filter(q=>['left','right'].includes(q.key)).length,2);assert.equal(model.parts.filter(q=>q.key.includes('drawer')).length,5);assert.equal(model.parts.filter(q=>q.key.includes('door-b2')).length,1);
  model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
 }
 assert.throws(()=>G.build({...base,width:200,angleR:45}));assert.throws(()=>G.pack(G.build(base).parts,{...base,sheetW:100}));
 console.log(`${cases} geometry configurations passed: closed/simple contours, angled joints, positive/negative dovetails, kerf and sheet packing.`);
+
+function CabinetWidth(part){const b=G.bounds(part.outline);return b.maxX-b.minX}

@@ -17,6 +17,13 @@ function offset(poly,amount){
  const edges=poly.map((p,i)=>{const v=sub(poly[(i+1)%poly.length],p),l=Math.hypot(...v);return {v,p:add(p,mul([v[1],-v[0]],amount*sign/l))}});
  return clean(edges.map((e,i)=>{const prev=edges[(i+edges.length-1)%edges.length];return lineMeet(prev.p,prev.v,e.p,e.v)}));
 }
+// Inset each edge independently. This lets a drawer follow the shelf outline
+// while keeping a different clearance at the front, sides and back.
+function insetEdges(poly,amounts){
+ const sign=Math.sign(area(poly));
+ const edges=poly.map((p,i)=>{const v=sub(poly[(i+1)%poly.length],p),l=Math.hypot(...v),u=mul(v,1/l),n=mul([-u[1],u[0]],sign);return {v,p:add(p,mul(n,amounts[i]||0))}});
+ return clean(edges.map((e,i)=>{const prev=edges[(i+edges.length-1)%edges.length];return lineMeet(prev.p,prev.v,e.p,e.v)}));
+}
 // Notches follow the edge's tangent and inward NORMAL. No line crosses a tooth base.
 function profile(poly,specs){
  const edges=poly.map((p,i)=>{const v=sub(poly[(i+1)%poly.length],p),len=Math.hypot(...v),u=mul(v,1/len);return {p,u,n:[-u[1],u[0]],len,s:specs[i]||{base:0,intervals:[]}}});
@@ -145,17 +152,23 @@ function build(p){
    else if(type==='door-double'){
     const half=(doorW-g)/2;addDoor(`DOOR VANO ${bay} · SX`,`door-b${bay}-left`,doorX,doorZ,half,doorH,'left');addDoor(`DOOR VANO ${bay} · DX`,`door-b${bay}-right`,doorX+half+g,doorZ,half,doorH,'right');
    }else if(type==='drawer'){
-    const rearW=W-leftBack-rightBack,boxW=Math.min(W,rearW)-2*(t+p.drawerClearance),boxD=D-Math.max(10,2*t),wallH=Math.min(p.drawerHeight,doorH-t),boxX=x+(W-boxW)/2,boxZ=low+g;
-    if(boxW<8*t||boxD<8*t||wallH<4*t)throw Error(`M${mid} vano ${bay}: spazio insufficiente per il cassetto.`);
-    const alongDepth=stations(boxD,p.finger,3*t,p.joint),alongBack=stations(boxW,p.finger,3*t,p.joint),wd=(a,d)=>a.map(([s,e])=>[s,e,d]);
-    const bottomOutline=profile(rect(0,0,boxW,boxD),[{base:0,intervals:[]},{base:0,intervals:wd(alongDepth,-t)},{base:0,intervals:wd(reverseIntervals(alongBack,boxW),-t)},{base:0,intervals:wd(reverseIntervals(alongDepth,boxD),-t)}]);
-    const sideOutline=profile(rect(0,0,boxD,wallH),[{base:t,intervals:wd(alongDepth,0)},null,null,null]);
-    const backOutline=profile(rect(0,0,boxW,wallH),[{base:t,intervals:wd(alongBack,0)},null,null,null]);
+    const sideInset=t+p.drawerClearance,rearInset=Math.max(10,2*t)+p.drawerClearance,wallH=Math.min(p.drawerHeight,doorH-t),boxZ=low+g;
+    // The drawer is an edge-by-edge inset of the actual shelf footprint. It is
+    // therefore rectangular, tapered or flared exactly like the hosting bay.
+    const box=insetEdges(base,[0,sideInset,rearInset,sideInset]),[fl,fr,br,bl]=box;
+    const frontW=dist(fl,fr),rightD=dist(fr,br),backW=dist(bl,br),leftD=dist(fl,bl);
+    if(Math.min(frontW,backW)<8*t||Math.min(leftD,rightD)<8*t||wallH<4*t||area(box)<=EPS)throw Error(`M${mid} vano ${bay}: spazio insufficiente per il cassetto sagomato.`);
+    const alongRight=stations(rightD,p.finger,3*t,p.joint),alongBack=stations(backW,p.finger,3*t,p.joint),alongLeft=stations(leftD,p.finger,3*t,p.joint),wd=(a,d)=>a.map(([s,e])=>[s,e,d]);
+    const bottomOutline=profile(box,[{base:0,intervals:[]},{base:0,intervals:wd(alongRight,-t)},{base:0,intervals:wd(reverseIntervals(alongBack,backW),-t)},{base:0,intervals:wd(reverseIntervals(alongLeft,leftD),-t)}]);
+    const leftOutline=profile(rect(0,0,leftD,wallH),[{base:t,intervals:wd(alongLeft,0)},null,null,null]);
+    const rightOutline=profile(rect(0,0,rightD,wallH),[{base:t,intervals:wd(alongRight,0)},null,null,null]);
+    const backOutline=profile(rect(0,0,backW,wallH),[{base:t,intervals:wd(alongBack,0)},null,null,null]);
+    const leftU=mul(sub(bl,fl),1/leftD),rightU=mul(sub(br,fr),1/rightD),backU=mul(sub(br,bl),1/backW);
     make(`DRAWER VANO ${bay} · FRONT`,`drawer-b${bay}-front`,rect(0,0,doorW,doorH),[],[doorX,-t-2,doorZ],[1,0,0],[0,0,1],[0,1,0]);
-    make(`DRAWER VANO ${bay} · BOTTOM`,`drawer-b${bay}-bottom`,bottomOutline,[],[boxX,0,boxZ],[1,0,0],[0,1,0],[0,0,1]);
-    make(`DRAWER VANO ${bay} · SIDE L`,`drawer-b${bay}-side-l`,sideOutline,[],[boxX,0,boxZ+t],[0,1,0],[0,0,1],[1,0,0]);
-    make(`DRAWER VANO ${bay} · SIDE R`,`drawer-b${bay}-side-r`,sideOutline,[],[boxX+boxW-t,0,boxZ+t],[0,1,0],[0,0,1],[1,0,0]);
-    make(`DRAWER VANO ${bay} · BACK`,`drawer-b${bay}-back`,backOutline,[],[boxX,boxD-t,boxZ+t],[1,0,0],[0,0,1],[0,1,0]);
+    make(`DRAWER VANO ${bay} · BOTTOM SAGOMATO`,`drawer-b${bay}-bottom`,bottomOutline,[],[x,0,boxZ],[1,0,0],[0,1,0],[0,0,1]);
+    make(`DRAWER VANO ${bay} · SIDE L`,`drawer-b${bay}-side-l`,leftOutline,[],[x+fl[0],fl[1],boxZ+t],[leftU[0],leftU[1],0],[0,0,1],[leftU[1],-leftU[0],0]);
+    make(`DRAWER VANO ${bay} · SIDE R`,`drawer-b${bay}-side-r`,rightOutline,[],[x+fr[0],fr[1],boxZ+t],[rightU[0],rightU[1],0],[0,0,1],[-rightU[1],rightU[0],0]);
+    make(`DRAWER VANO ${bay} · BACK SAGOMATO`,`drawer-b${bay}-back`,backOutline,[],[x+bl[0],bl[1],boxZ+t],[backU[0],backU[1],0],[0,0,1],[backU[1],-backU[0],0]);
    }
   }
   // Explicit parametric drilling template for EXTERNAL hinges, never fake laser-cut mechanisms.
