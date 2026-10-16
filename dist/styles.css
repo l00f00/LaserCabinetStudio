@@ -3,3 +3,31 @@
 .workspace{min-height:0;overflow:hidden}.viewport canvas,.viewport svg{position:absolute;inset:0}
 .workspace{grid-template-rows:56px auto auto minmax(0,1fr) 86px}.view-controls{display:flex;align-items:center;gap:12px;padding:8px 18px;flex-wrap:wrap;border-bottom:1px solid var(--line)}.view-controls label{display:flex;align-items:center;white-space:nowrap}.view-controls input[type=range]{width:90px}.view-controls select{width:auto}#validation{padding:8px 18px;font-size:12px;color:#a5e6bc;background:#17291e;min-height:34px}#validation.error{color:#ffb5ad;background:#3e211f}.selected-field{color:var(--accent)}.fields p{color:var(--muted);font-size:12px;margin:0}.viewport{min-height:0}canvas,svg{touch-action:none}button:disabled,input:disabled,select:disabled{opacity:.45;cursor:not-allowed}[hidden]{display:none!important}.hint{pointer-events:none;max-width:95%;text-align:center;width:max-content}.view-controls input[type=checkbox]{accent-color:var(--accent)}#cutPreview [data-part]{cursor:pointer}#hingeFields{display:grid;gap:10px}@media(max-width:800px){.workspace{height:85vh;min-height:600px;grid-template-rows:auto auto auto minmax(200px,1fr) 150px}.toolbar{flex-wrap:wrap;padding:5px}.view-actions{padding-bottom:6px}.metrics div{padding:10px}.hint{font-size:10px}.view-controls{padding:8px}.metrics strong{font-size:16px}}
 .viewport{background:#f4f1ea!important}.viewport canvas{background:linear-gradient(135deg,#fbfaf6,#e4dfd3)}#cutPreview{background:#fffdf8;border:1px solid #cfc8ba}.hint{color:#34302a;background:#fffdf0cc}
+
+/* project summary */
+.workspace{grid-template-rows:56px auto auto minmax(0,1fr)}
+.summary-panel{min-height:0;overflow:auto;padding:22px;background:#ece8df;color:#1b1f22}
+.summary-grid{display:grid;grid-template-columns:minmax(300px,1.3fr) repeat(2,minmax(230px,1fr));gap:14px;margin-bottom:14px}
+.summary-card{min-height:290px;background:#faf8f2;border:1px solid #c9c2b6;padding:18px;box-shadow:0 8px 28px #493d2712}
+.summary-card p{color:#64605a;font-size:12px;min-height:36px}
+.summary-card label{color:#514c45;margin:12px 0}
+.summary-card input,.summary-card select{background:#fff;color:#191d20;border-color:#c9c2b6}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.card-head small{color:#8a8173;font-size:9px;font-weight:800;letter-spacing:.14em}
+.card-head h2{margin:3px 0 0;font-size:18px}
+.card-head>span,.card-head>strong{font-size:11px;color:#7a6d58}
+.summary-preview{display:grid;grid-template-rows:auto minmax(200px,1fr)}
+#summaryModel{width:100%;height:100%;min-height:210px;display:block}
+.summary-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.local-status{margin-top:12px;padding:9px;border-left:3px solid var(--accent);background:#f2ecde;color:#6b5b3d;font-size:11px}
+.package-list{display:grid;gap:7px;margin:20px 0}
+.package-list span{padding-left:19px;color:#4e5d50;font-size:12px}
+.package-list span:before{content:'✓';color:#20833d;margin-left:-19px;margin-right:8px}
+.wide-button{width:100%}
+.summary-panel .metrics{position:sticky;bottom:0;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);box-shadow:0 -8px 20px #ece8df}
+.summary-panel .metrics div:last-child{border-right:0}
+.header-actions{display:flex;align-items:center;gap:14px}
+.coffee{border-color:#614d22;color:#ffd06a;background:#211b0f}
+.version{font-size:9px;color:var(--accent);font-style:normal;border:1px solid #5e481a;padding:2px 4px;margin-left:4px}
+@media(max-width:1050px){.summary-grid{grid-template-columns:1fr 1fr}.summary-preview{grid-column:1/-1}.summary-panel .metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:800px){.workspace{grid-template-rows:auto auto auto minmax(200px,1fr)}.summary-panel{padding:10px}.summary-grid{grid-template-columns:1fr}.summary-preview{grid-column:auto}.summary-card{min-height:0}.summary-panel .metrics{position:static;grid-template-columns:1fr 1fr}.summary-panel .metrics div{border-bottom:1px solid var(--line)}.header-actions .coffee{display:none}.tabs{overflow:auto}.tab{white-space:nowrap}}

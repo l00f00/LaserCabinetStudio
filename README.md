@@ -12,6 +12,9 @@ Demo: [laser-cabinet-studio.l00f00.chatgpt.site](https://laser-cabinet-studio.l0
 - sportelli e cassetti multipli, divisori interni e apertura destra/sinistra;
 - maniglie tagliate: foro tondo, ellittico o asola rettangolare;
 - nesting con rotazione, conteggio tavole e rendimento materiale;
+- pannello Riepilogo con miniatura 3D, ingombro, pezzi, tavole, moduli e taglio stimato;
+- versioni del progetto salvabili e richiamabili dal `localStorage` del browser;
+- piano completo scaricabile in un unico ZIP con JSON, tutte le tavole SVG e tutti i DXF;
 - SVG/DXF per ogni tavola: livello rosso `CUT`, livello blu `MARK`;
 - marcatura del nome nell'angolo inferiore destro di ogni pezzo;
 - stato condivisibile via URL e progetto JSON scaricabile;
@@ -52,6 +55,9 @@ LaserCabinetStudio.getState();
 LaserCabinetStudio.configure({ width: 600, height: 700, depth: 300, kerf: 0.05 });
 LaserCabinetStudio.applyPreset("kitchen");
 LaserCabinetStudio.exportSvg(1);
+LaserCabinetStudio.listLocalProjects();
+LaserCabinetStudio.saveLocal();
+LaserCabinetStudio.exportPlanZip();
 ```
 
 Nei browser compatibili vengono registrati anche quattro strumenti WebMCP: `get_cabinet_state`, `configure_cabinet`, `apply_cabinet_preset` e `get_cut_plan`. Il contratto completo è in [skills/laser-cabinet-studio/references/api.md](skills/laser-cabinet-studio/references/api.md).

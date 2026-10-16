@@ -85,25 +85,33 @@
 
     <section class="workspace">
       <div class="toolbar">
-        <div class="tabs"><button class="tab active" data-view="model">Modello 3D</button><button class="tab" data-view="cut">Piano di taglio</button></div>
+        <div class="tabs"><button class="tab active" data-view="model">Modello 3D</button><button class="tab" data-view="cut">Piano di taglio</button><button class="tab" data-view="summary">Riepilogo</button></div>
         <div class="view-actions"><button id="resetView" class="ghost">Centra</button><button id="downloadSvg" class="primary">Scarica SVG</button><button id="downloadDxf" class="secondary">DXF</button></div>
       </div>
       <div class="view-controls"><button id="isoView">Prospettiva</button><button id="topView">Dall'alto</button><label>Esploso <input id="explode" type="range" min="0" max="100" value="0"></label><label><input id="wire" type="checkbox"> Trasparente</label><select id="sheetSelect" aria-label="Foglio di taglio" hidden></select></div>
       <div id="validation" role="status" aria-live="polite"></div>
       <div id="modelView" class="viewport"><canvas id="model"></canvas><div class="hint">clic: seleziona · trascina: ruota · Maiusc + trascina: sposta · rotella: zoom</div></div>
       <div id="cutView" class="viewport hidden"><svg id="cutPreview" aria-label="Anteprima del piano di taglio"></svg><div class="hint">rosso: taglio · blu: marcatura veloce · esportazione della tavola selezionata · Maiusc + trascina: sposta</div></div>
-      <div class="metrics">
+      <div id="summaryView" class="summary-panel hidden">
+        <div class="summary-grid">
+          <section class="summary-card summary-preview"><div class="card-head"><div><small>ANTEPRIMA</small><h2 id="summaryTitle">Mobiletto camper</h2></div><span id="summaryRevision">rev. 1</span></div><canvas id="summaryModel" aria-label="Miniatura 3D del progetto"></canvas></section>
+          <section class="summary-card"><div class="card-head"><div><small>PROGETTI NEL BROWSER</small><h2>Salvataggi locali</h2></div></div><p>Conservati solo in questo browser. Puoi richiamare una versione senza account.</p><label>Nome salvataggio<input id="localSaveName" type="text" value="Mobiletto camper"></label><label>Versioni salvate<select id="localSaveSelect"><option value="">Nessun salvataggio</option></select></label><div class="summary-actions"><button id="saveLocal" class="primary">Salva versione</button><button id="loadLocal" class="secondary">Carica</button></div><div id="localSaveStatus" class="local-status">Ancora nessun salvataggio locale.</div></section>
+          <section class="summary-card"><div class="card-head"><div><small>CONSEGNA</small><h2>Piano completo</h2></div><strong id="summaryBoards">— tavole</strong></div><p id="summaryPlanText">Il pacchetto include progetto JSON, riepilogo e tutte le tavole in SVG e DXF.</p><div class="package-list"><span>JSON parametri</span><span>SVG taglio + marcatura</span><span>DXF CUT + MARK</span></div><button id="downloadPlan" class="primary wide-button">Scarica piano completo .ZIP</button></section>
+        </div>
+        <div class="metrics">
         <div><small>Ingombro</small><strong id="metricSize">900 × 500 × 150</strong><span>mm</span></div>
         <div><small>Pezzi</small><strong id="metricPieces">—</strong><span>componenti</span></div>
         <div><small>Tavole</small><strong id="metricSheets">—</strong><span id="metricSheetSize">850 × 450 mm</span></div>
         <div><small>Moduli</small><strong id="metricModules">1</strong><span id="metricModuleMode">indipendenti</span></div>
         <div><small>Taglio stimato</small><strong id="metricCut">—</strong><span>metri</span></div>
+        </div>
       </div>
     </section>
   </main>
   <div id="toast" role="status"></div>
   <script src="config.js?v=1.0.0"></script>
   <script src="geometry.js?v=1.0.0"></script>
-  <script src="studio.js?v=1.0.0"></script>
+  <script src="archive.js?v=1.1.0"></script>
+  <script src="studio.js?v=1.1.0"></script>
 </body>
 </html>
