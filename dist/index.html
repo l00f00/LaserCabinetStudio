@@ -6,6 +6,7 @@
   <title>Laser Cabinet Studio</title>
   <meta name="description" content="Configuratore parametrico per mobili laser con incastri, ripiani e frontalini.">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="corner.css">
 </head>
 <body>
   <header>
@@ -34,14 +35,28 @@
         <label>Posizione frontalino<select id="lipMode"><option value="each" selected>Su ogni ripiano</option><option value="bottom">Solo in basso</option><option value="none">Nessuno</option></select></label>
       </div></details>
 
-      <details open><summary>03 · Incastro</summary><div class="fields">
+      <details open><summary>03 · Giunto angolare</summary><div class="fields">
+        <label>Lato inclinato<select id="cornerPair">
+          <option value="none" selected>Nessuno · box rettangolare</option>
+          <option value="m1r-m2l">M1 destra ↔ M2 sinistra</option>
+          <option value="m1l-m2r">M1 sinistra ↔ M2 destra</option>
+          <option value="m1l">Solo modulo 1 · sinistra</option>
+          <option value="m1r">Solo modulo 1 · destra</option>
+          <option value="m2l">Solo modulo 2 · sinistra</option>
+          <option value="m2r">Solo modulo 2 · destra</option>
+        </select></label>
+        <label>Angolo del fianco<select id="cornerAngle"><option value="45" selected>45° · coppia a 90°</option></select></label>
+        <div class="corner-note" id="cornerNote">Il fianco selezionato diventa diagonale; top, fondo, ripiani e incastri vengono ricalcolati.</div>
+      </div></details>
+
+      <details open><summary>04 · Incastro</summary><div class="fields">
         <label>Tipo<select id="joint"><option value="tab" selected>Linguetta + asola</option><option value="finger">Denti a pettine</option></select></label>
         <div class="row"><label>Passo dente<input id="finger" type="number" min="8" max="80" value="24"></label><label>Pressione<input id="press" type="number" step="0.01" value="0.05"></label></div>
         <label class="check"><input id="dogbone" type="checkbox"> Scarichi angolo (CNC, non laser)</label>
         <div class="fit"><span>Asola calcolata</span><strong id="slotValue">4,85 mm</strong></div>
       </div></details>
 
-      <details><summary>04 · Foglio e progetto</summary><div class="fields">
+      <details><summary>05 · Foglio e progetto</summary><div class="fields">
         <div class="row"><label>Foglio X<input id="sheetW" type="number" value="1200"></label><label>Foglio Y<input id="sheetH" type="number" value="900"></label></div>
         <label>Distanza pezzi<input id="gap" type="number" min="2" value="8"></label>
         <div class="button-grid"><button id="saveJson" class="secondary">Scarica JSON</button><button id="share" class="secondary">Copia link</button></div>
