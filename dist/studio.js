@@ -1,6 +1,6 @@
 'use strict';
 const $=id=>document.getElementById(id), $$=q=>[...document.querySelectorAll(q)];
-const fields='project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight handleSize sheetW sheetH gap'.split(' ');
+const fields='project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight handleSize sheetW sheetH gap cutSpeed cutPower markSpeed markPower'.split(' ');
 const words=new Set('project lipMode lipConfig parachute joint hinge moduleJoin dovetailPolarity frontConfig'.split(' '));
 const view={angle:-.7,tilt:.6,zoom:1,pan:[0,0],mode:'model',selected:'M1-left',sheet:0,explode:0,wire:false,cutZoom:1,cutPan:[0,0]};
 let current,packed,params,faces=[],revision=0;
@@ -8,6 +8,8 @@ let compartmentSignature='';
 let lipSignature='';
 const fmt=n=>Number(n.toFixed(3)),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const path=(p,x=0,y=0)=>p.map((q,i)=>(i?'L':'M')+fmt(q[0]+x)+' '+fmt(q[1]+y)).join(' ')+' Z';
+const placedLoop=(part,loop)=>loop.map(q=>Cabinet.placedPoint(part,q));
+const markLabel=p=>`${p.name} · MDF ${params.thickness} · K ${params.kerf} · CUT ${params.cutSpeed}/${params.cutPower}%`;
 const read=()=>Object.fromEntries(fields.map(k=>[k,words.has(k)?$(k).value:Number($(k).value)]));
 function syncCompartments(p){
  const signature=`${p.modules}:${p.shelves}`;if(signature===compartmentSignature)return false;compartmentSignature=signature;
@@ -60,7 +62,7 @@ function update(){
   $('wallSelect').innerHTML=current.parts.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
   if(!current.parts.some(p=>p.id===view.selected))view.selected=current.parts[0].id;
   view.sheet=Math.min(view.sheet,(packed?.sheets||1)-1);
-  $('sheetSelect').innerHTML=Array.from({length:packed?.sheets||0},(_,i)=>`<option value="${i}">Foglio ${i+1} / ${packed.sheets}</option>`).join('');$('sheetSelect').value=view.sheet;
+  $('sheetSelect').innerHTML=Array.from({length:packed?.sheets||0},(_,i)=>`<option value="${i}">Tavola ${i+1} / ${packed.sheets}</option>`).join('');$('sheetSelect').value=view.sheet;
   $('angleValue').textContent=fmt(current.L)+' / '+fmt(current.R)+' mm';
   $('slotValue').textContent=fmt(params.thickness-params.press)+' mm nominali';
   $('metricPieces').textContent=current.parts.length;$('metricModules').textContent=params.modules;
@@ -68,17 +70,18 @@ function update(){
   $('metricSize').textContent=[params.width,params.height,params.depth].join(' × ');
   const length=current.parts.reduce((sum,p)=>sum+[p.outline,...p.holes].reduce((s,loop)=>s+loop.reduce((v,q,i)=>v+Math.hypot(q[0]-loop[(i+1)%loop.length][0],q[1]-loop[(i+1)%loop.length][1]),0),0),0);
   $('metricCut').textContent=(length/1000).toFixed(2);
-  let closureCount=0;try{closureCount=Object.keys(JSON.parse(params.frontConfig||'{}')).length}catch{}
-  notice(error||`Revisione ${revision} · ${current.parts.length} pezzi · ${packed.sheets} fogli · ${closureCount} vani attrezzati · geometria comune 3D / taglio.`,!!error);
+  let closureCount=0;try{closureCount=Object.keys(JSON.parse(params.frontConfig||'{}')).length}catch{}const autoJoins=current.parts.filter(p=>p.name.endsWith('AUTO A')).length;
+  $('metricSheets').textContent=packed?.sheets||'—';$('metricSheetSize').textContent=`${params.sheetW} × ${params.sheetH} mm`;
+  notice(error||`Revisione ${revision} · ${current.parts.length} pezzi · ${packed.sheets} tavole · nesting ${(packed.efficiency*100).toFixed(0)}% · ${autoJoins} giunti automatici · ${closureCount} vani attrezzati.`,!!error);
   select(view.selected);
- }catch(e){current=packed=null;faces=[];notice(e.message,true);['metricPieces','metricCut'].forEach(k=>$(k).textContent='—');render3D();renderCut()}
+ }catch(e){current=packed=null;faces=[];notice(e.message,true);['metricPieces','metricCut','metricSheets'].forEach(k=>$(k).textContent='—');render3D();renderCut()}
  ['downloadSvg','downloadDxf'].forEach(k=>$(k).disabled=!packed);
 }
 function renderCut(){
  const svg=$('cutPreview');if(!packed){svg.innerHTML='<text x="20" y="40" fill="#b42318">Correggi le quote indicate sopra.</text>';svg.setAttribute('viewBox','0 0 900 600');return}
  const w=params.sheetW/view.cutZoom,h=params.sheetH/view.cutZoom;
  svg.setAttribute('viewBox',`${view.cutPan[0]} ${view.cutPan[1]} ${w} ${h}`);
- svg.innerHTML=`<rect width="${params.sheetW}" height="${params.sheetH}" fill="white" stroke="#aab3bf" stroke-dasharray="4 4"/>`+packed.parts.filter(p=>p.sheet===view.sheet).map(p=>`<g data-part="${p.id}" tabindex="0" role="button" aria-label="${esc(p.name)}"><path d="${[p.outline,...p.holes].map(q=>path(q,p.px,p.py)).join(' ')}" fill="${p.id===view.selected?'#ffdf85':'#f8eed8'}" fill-rule="evenodd" stroke="${p.id===view.selected?'#bd6200':'#b52b36'}" stroke-width="1.2" vector-effect="non-scaling-stroke"/><text x="${p.px+Cabinet.bounds(p.outline).minX+4}" y="${p.py+Cabinet.bounds(p.outline).minY+12}" font-size="10" fill="#27445e" pointer-events="none">${esc(p.name)}</text></g>`).join('');
+ svg.innerHTML=`<rect width="${params.sheetW}" height="${params.sheetH}" fill="white" stroke="#aab3bf" stroke-dasharray="4 4"/>`+packed.parts.filter(p=>p.sheet===view.sheet).map(p=>{const b=Cabinet.bounds(p.outline),label=Cabinet.placedPoint(p,[b.minX+4,b.minY+12]);return `<g data-part="${p.id}" tabindex="0" role="button" aria-label="${esc(p.name)}"><path d="${[p.outline,...p.holes].map(q=>path(placedLoop(p,q))).join(' ')}" fill="${p.id===view.selected?'#ffdf85':'#f8eed8'}" fill-rule="evenodd" stroke="${p.id===view.selected?'#bd6200':'#b52b36'}" stroke-width="1.2" vector-effect="non-scaling-stroke"/><text x="${fmt(label[0])}" y="${fmt(label[1])}" font-size="8" fill="#1261a0" pointer-events="none">${esc(markLabel(p))}</text></g>`}).join('');
  svg.querySelectorAll('[data-part]').forEach(g=>{g.onclick=()=>select(g.dataset.part);g.onkeydown=e=>{if(e.key==='Enter')select(g.dataset.part)}});
 }
 function rotate(q){const [x,y,z]=q,c=Math.cos(view.angle),s=Math.sin(view.angle),r=x*s+y*c;return [x*c-y*s,r*Math.sin(view.tilt)-z*Math.cos(view.tilt),r*Math.cos(view.tilt)+z*Math.sin(view.tilt)]}
@@ -102,9 +105,9 @@ function render3D(){
  }
  ctx.fillStyle='#334155';ctx.font='12px system-ui';ctx.fillText('Pannelli reali · spessore '+params.thickness+' mm · revisione '+revision,18,24);
 }
-function svgExport(){return `<svg xmlns="http://www.w3.org/2000/svg" width="${params.sheetW}mm" height="${params.sheetH}mm" viewBox="0 0 ${params.sheetW} ${params.sheetH}"><title>${esc(params.project)} — foglio ${view.sheet+1}</title><g id="CUT" fill="none" stroke="red" stroke-width="0.1">${packed.parts.filter(p=>p.sheet===view.sheet).map(p=>`<path id="${p.id}" d="${[p.outline,...p.holes].map(q=>path(q,p.px,p.py)).join(' ')}"/>`).join('')}</g></svg>`}
-function dxfExport(){let s='0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n4\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n';for(const p of packed.parts.filter(p=>p.sheet===view.sheet))for(const loop of [p.outline,...p.holes]){s+='0\nLWPOLYLINE\n100\nAcDbEntity\n8\nCUT\n100\nAcDbPolyline\n90\n'+loop.length+'\n70\n1\n';for(const q of loop)s+='10\n'+fmt(q[0]+p.px)+'\n20\n'+fmt(params.sheetH-q[1]-p.py)+'\n'}return s+'0\nENDSEC\n0\nEOF\n'}
-function download(data,type,ext){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([data],{type}));a.href=url;a.download=(params.project||'cabinet')+'-foglio-'+(view.sheet+1)+'.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function svgExport(){const parts=packed.parts.filter(p=>p.sheet===view.sheet),marks=parts.map(p=>{const b=Cabinet.bounds(p.outline),q=Cabinet.placedPoint(p,[b.minX+4,b.minY+12]);return `<text x="${fmt(q[0])}" y="${fmt(q[1])}" font-size="7">${esc(markLabel(p))}</text>`}).join('');return `<svg xmlns="http://www.w3.org/2000/svg" width="${params.sheetW}mm" height="${params.sheetH}mm" viewBox="0 0 ${params.sheetW} ${params.sheetH}"><title>${esc(params.project)} — tavola ${view.sheet+1}</title><g id="CUT" fill="none" stroke="red" stroke-width="0.1" data-speed="${params.cutSpeed}" data-power="${params.cutPower}">${parts.map(p=>`<path id="${p.id}" d="${[p.outline,...p.holes].map(q=>path(placedLoop(p,q))).join(' ')}"/>`).join('')}</g><g id="MARK" fill="#0057ff" stroke="none" data-operation="mark" data-speed="${params.markSpeed}" data-power="${params.markPower}">${marks}</g></svg>`}
+function dxfExport(){let s='0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n4\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n';for(const p of packed.parts.filter(p=>p.sheet===view.sheet)){for(const loop of [p.outline,...p.holes]){const placed=placedLoop(p,loop);s+='0\nLWPOLYLINE\n100\nAcDbEntity\n8\nCUT\n62\n1\n100\nAcDbPolyline\n90\n'+placed.length+'\n70\n1\n';for(const q of placed)s+='10\n'+fmt(q[0])+'\n20\n'+fmt(params.sheetH-q[1])+'\n'}const b=Cabinet.bounds(p.outline),q=Cabinet.placedPoint(p,[b.minX+4,b.minY+12]);s+='0\nTEXT\n8\nMARK\n62\n5\n10\n'+fmt(q[0])+'\n20\n'+fmt(params.sheetH-q[1])+'\n40\n7\n1\n'+markLabel(p).replace(/[^\x20-\x7E]/g,' ')+'\n'}return s+'0\nENDSEC\n0\nEOF\n'}
+function download(data,type,ext){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([data],{type}));a.href=url;a.download=(params.project||'cabinet')+'-tavola-'+(view.sheet+1)+'.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function switchView(mode){view.mode=mode;$('modelView').classList.toggle('hidden',mode!=='model');$('cutView').classList.toggle('hidden',mode!=='cut');$('sheetSelect').hidden=mode!=='cut';$$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===mode));render3D();renderCut()}
 fields.forEach(k=>{const fn=()=>{const mirror=document.querySelector(`[data-for="${k}"]`);if(mirror)mirror.value=$(k).value;update()};$(k).addEventListener('input',fn);$(k).addEventListener('change',fn)});
 $$('[data-for]').forEach(el=>el.oninput=()=>{$(el.dataset.for).value=el.value;update()});

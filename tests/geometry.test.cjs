@@ -70,6 +70,14 @@ for(const modules of [2,3])for(const dovetailPolarity of ['positive','negative']
  const model=G.build(p);assert.equal(model.parts.filter(q=>['left','right'].includes(q.key)).length,2);assert.equal(model.parts.filter(q=>q.key.includes('drawer')).length,5);assert.equal(model.parts.filter(q=>q.key.includes('door-b2')).length,1);
  model.parts.map(q=>G.cutting(q,p.kerf)).forEach(G.validatePart);cases++;
 }
+{
+ const p={...base,width:1000,angleL:90,angleR:90,sheetW:850,sheetH:450},model=G.build(p),automatic=model.parts.filter(q=>q.name.includes('AUTO'));
+ assert(automatic.length>=6,'I pannelli oltre 850 mm devono essere divisi automaticamente');
+ assert(automatic.some(q=>q.name.endsWith('AUTO A'))&&automatic.some(q=>q.name.endsWith('AUTO B')),'La divisione deve creare una coppia complementare');
+ const packed=G.pack(model.parts.map(q=>G.cutting(q,p.kerf)),p);assert(packed.sheets>=1);assert(packed.efficiency>0&&packed.efficiency<=1);
+ for(const part of packed.parts){const b=G.bounds(part.outline.map(q=>G.placedPoint(part,q)));assert(b.minX>=0&&b.minY>=0&&b.maxX<=p.sheetW+1e-6&&b.maxY<=p.sheetH+1e-6,'Il nesting deve restare nell’area laser')}
+ cases++;
+}
 assert.throws(()=>G.build({...base,width:200,angleR:45}));assert.throws(()=>G.pack(G.build(base).parts,{...base,sheetW:100}));
 console.log(`${cases} geometry configurations passed: closed/simple contours, angled joints, positive/negative dovetails, kerf and sheet packing.`);
 

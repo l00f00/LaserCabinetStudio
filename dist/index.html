@@ -74,8 +74,10 @@
       </div></details>
 
       <details><summary>06 · Foglio e progetto</summary><div class="fields">
-        <div class="row"><label>Foglio X<input id="sheetW" type="number" value="1200"></label><label>Foglio Y<input id="sheetH" type="number" value="900"></label></div>
+        <div class="row"><label>Area laser X<input id="sheetW" type="number" value="850"></label><label>Area laser Y<input id="sheetH" type="number" value="450"></label></div>
         <label>Distanza pezzi<input id="gap" type="number" min="2" value="8"></label>
+        <div class="row"><label>Taglio mm/s<input id="cutSpeed" type="number" min="1" value="15"></label><label>Taglio potenza %<input id="cutPower" type="number" min="1" max="100" value="85"></label></div>
+        <div class="row"><label>Marcatura mm/s<input id="markSpeed" type="number" min="1" value="150"></label><label>Marcatura potenza %<input id="markPower" type="number" min="1" max="100" value="20"></label></div>
         <div class="button-grid"><button id="saveJson" class="secondary">Scarica JSON</button><button id="share" class="secondary">Copia link</button></div>
       </div></details>
     </aside>
@@ -88,10 +90,11 @@
       <div class="view-controls"><button id="isoView">Prospettiva</button><button id="topView">Dall'alto</button><label>Esploso <input id="explode" type="range" min="0" max="100" value="0"></label><label><input id="wire" type="checkbox"> Trasparente</label><select id="sheetSelect" aria-label="Foglio di taglio" hidden></select></div>
       <div id="validation" role="status" aria-live="polite"></div>
       <div id="modelView" class="viewport"><canvas id="model"></canvas><div class="hint">clic: seleziona · trascina: ruota · Maiusc + trascina: sposta · rotella: zoom</div></div>
-      <div id="cutView" class="viewport hidden"><svg id="cutPreview" aria-label="Anteprima del piano di taglio"></svg><div class="hint">rosso: taglio · etichette solo anteprima · esportazione del foglio selezionato · Maiusc + trascina: sposta</div></div>
+      <div id="cutView" class="viewport hidden"><svg id="cutPreview" aria-label="Anteprima del piano di taglio"></svg><div class="hint">rosso: taglio · blu: marcatura veloce · esportazione della tavola selezionata · Maiusc + trascina: sposta</div></div>
       <div class="metrics">
         <div><small>Ingombro</small><strong id="metricSize">900 × 500 × 150</strong><span>mm</span></div>
         <div><small>Pezzi</small><strong id="metricPieces">—</strong><span>componenti</span></div>
+        <div><small>Tavole</small><strong id="metricSheets">—</strong><span id="metricSheetSize">850 × 450 mm</span></div>
         <div><small>Moduli</small><strong id="metricModules">1</strong><span id="metricModuleMode">indipendenti</span></div>
         <div><small>Taglio stimato</small><strong id="metricCut">—</strong><span>metri</span></div>
       </div>

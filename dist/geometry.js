@@ -62,6 +62,31 @@ function baySetup(raw){
  const items=Array.from({length:columns},(_,i)=>{const v=source[i]||{};return item(['door','drawer'].includes(v.type)?v.type:'open',{hinge:v.hinge==='right'?'right':'left',handle:['round','square'].includes(v.handle)?v.handle:'none',dividers:Math.max(0,Math.min(4,Math.round(Number(v.dividers)||0)))});});
  return {columns,partitions:!!raw?.partitions,items};
 }
+function clipHalf(poly,axis,cut,keepLow){
+ const inside=q=>keepLow?q[axis]<=cut+EPS:q[axis]>=cut-EPS,out=[];
+ poly.forEach((a,i)=>{const b=poly[(i+1)%poly.length],ain=inside(a),bin=inside(b);if(ain)out.push(a);if(ain!==bin){const t=(cut-a[axis])/(b[axis]-a[axis]),q=lerp(a,b,t);q[axis]=cut;out.push(q)}});
+ return clean(out);
+}
+function seamProfile(poly,axis,cut,p,kind){
+ for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length];if(Math.abs(a[axis]-cut)>EPS||Math.abs(b[axis]-cut)>EPS)continue;
+  const v=sub(b,a),len=Math.hypot(...v);if(len<20)continue;const u=mul(v,1/len),n=[-u[1],u[0]],teeth=dovetailIntervals(len,p,kind),insert=[];
+  const at=(s,d)=>add(add(a,mul(u,s)),mul(n,d));for(const {c,head,neck,depth} of teeth)insert.push(at(c-neck/2,0),at(c-head/2,depth),at(c+head/2,depth),at(c+neck/2,0));
+  return clean([...poly.slice(0,i+1),...insert,...poly.slice(i+1)]);
+ }return poly;
+}
+function splitOversize(parts,p){
+ const limit=Math.max(p.sheetW,p.sheetH),result=[];
+ for(const part of parts){const b=bounds(part.outline),w=b.maxX-b.minX,h=b.maxY-b.minY,axis=w>=h?0:1,length=axis===0?w:h;if(length<=limit+EPS){result.push(part);continue}
+  const min=axis===0?b.minX:b.minY,max=axis===0?b.maxX:b.maxY;let cut=(min+max)/2;
+  const blocked=part.holes.map(hole=>{const hb=bounds(hole);return axis===0?[hb.minX-tolerance(p),hb.maxX+tolerance(p)]:[hb.minY-tolerance(p),hb.maxY+tolerance(p)]});
+  for(const [a,z] of blocked)if(cut>a&&cut<z)cut=z;
+  if(cut-min<length*.25||max-cut<length*.25)cut=(min+max)/2;
+  const low=seamProfile(clipHalf(part.outline,axis,cut,true),axis,cut,p,'male'),high=seamProfile(clipHalf(part.outline,axis,cut,false),axis,cut,p,'female');
+  const lowHoles=part.holes.filter(h=>h.every(q=>q[axis]<cut-EPS)),highHoles=part.holes.filter(h=>h.every(q=>q[axis]>cut+EPS));
+  result.push({...part,id:part.id+'-A',key:part.key+'-auto-a',name:part.name+' · AUTO A',outline:low,holes:lowHoles},{...part,id:part.id+'-B',key:part.key+'-auto-b',name:part.name+' · AUTO B',outline:high,holes:highHoles});
+ }return result;
+}
+function tolerance(p){return p.thickness*2}
 function contains(poly,q){let inside=false;poly.forEach((a,i)=>{const b=poly[(i+1)%poly.length];if((a[1]>q[1])!==(b[1]>q[1])&&q[0]<(b[0]-a[0])*(q[1]-a[1])/(b[1]-a[1])+a[0])inside=!inside});return inside}
 function intersections(poly){
  for(let i=0;i<poly.length;i++)for(let j=i+1;j<poly.length;j++){
@@ -224,21 +249,25 @@ function build(p){
   }
   originX+=W+(joined?0:Math.max(25,-L,-R)+25);
  });
- parts.forEach(validatePart);
- return {parts,joints,L,R,widths};
+ const finalParts=splitOversize(parts,p);finalParts.forEach(validatePart);
+ return {parts:finalParts,joints,L,R,widths};
 }
 function world(part,q,z=0){return add(add(add(part.o,mul(part.u,q[0])),mul(part.v,q[1])),mul(part.n,z))}
 function cutting(part,kerf){return {...part,outline:offset(part.outline,kerf/2),holes:part.holes.map(h=>offset(h,-kerf/2))}}
+function placedPoint(part,q){const b=part.sourceBounds||bounds(part.outline),x=q[0]-b.minX,y=q[1]-b.minY;return part.rotated?[part.placeX+(b.maxY-b.minY)-y,part.placeY+x]:[part.placeX+x,part.placeY+y]}
 function pack(parts,p){
- let x=p.gap,y=p.gap,row=0,sheet=0;
- const placed=[];
- for(const part of parts){const b=bounds(part.outline),w=b.maxX-b.minX,h=b.maxY-b.minY;
-  if(w+2*p.gap>p.sheetW||h+2*p.gap>p.sheetH)throw Error(part.name+': non entra nel foglio '+p.sheetW+' × '+p.sheetH+' mm. Aumenta il foglio.');
-  if(x+w+p.gap>p.sheetW){x=p.gap;y+=row+p.gap;row=0}
-  if(y+h+p.gap>p.sheetH){sheet++;x=p.gap;y=p.gap;row=0}
-  placed.push({...part,px:x-b.minX,py:y-b.minY,sheet});x+=w+p.gap;row=Math.max(row,h);
- }return {parts:placed,sheets:sheet+1};
+ const items=parts.map(part=>{const b=bounds(part.outline);return {part,b,w:b.maxX-b.minX,h:b.maxY-b.minY}}).sort((a,b)=>Math.max(b.w,b.h)-Math.max(a.w,a.h)||b.w*b.h-a.w*a.h),sheets=[];
+ const prune=free=>free.filter((a,i)=>a.w>EPS&&a.h>EPS&&!free.some((b,j)=>i!==j&&a.x>=b.x-EPS&&a.y>=b.y-EPS&&a.x+a.w<=b.x+b.w+EPS&&a.y+a.h<=b.y+b.h+EPS));
+ const split=(free,u)=>prune(free.flatMap(r=>{if(u.x>=r.x+r.w||u.x+u.w<=r.x||u.y>=r.y+r.h||u.y+u.h<=r.y)return [r];const out=[];if(u.x>r.x)out.push({x:r.x,y:r.y,w:u.x-r.x,h:r.h});if(u.x+u.w<r.x+r.w)out.push({x:u.x+u.w,y:r.y,w:r.x+r.w-u.x-u.w,h:r.h});if(u.y>r.y)out.push({x:r.x,y:r.y,w:r.w,h:u.y-r.y});if(u.y+u.h<r.y+r.h)out.push({x:r.x,y:u.y+u.h,w:r.w,h:r.y+r.h-u.y-u.h});return out}));
+ const fresh=()=>({free:[{x:0,y:0,w:p.sheetW,h:p.sheetH}],parts:[]});
+ for(const item of items){let best=null;for(let si=0;si<sheets.length;si++)for(const r of sheets[si].free)for(const rotated of [false,true]){const w=rotated?item.h:item.w,h=rotated?item.w:item.h;if(w<=r.w+EPS&&h<=r.h+EPS){const score=[Math.min(r.w-w,r.h-h),r.w*r.h-w*h];if(!best||score[0]<best.score[0]||score[0]===best.score[0]&&score[1]<best.score[1])best={si,r,rotated,w,h,score}}}
+  if(!best){sheets.push(fresh());const si=sheets.length-1,r=sheets[si].free[0];for(const rotated of [false,true]){const w=rotated?item.h:item.w,h=rotated?item.w:item.h;if(w<=r.w+EPS&&h<=r.h+EPS){best={si,r,rotated,w,h,score:[0,0]};break}}}
+  if(!best)throw Error(item.part.name+': non entra nel foglio '+p.sheetW+' × '+p.sheetH+' mm, nemmeno ruotato.');
+  const used={x:best.r.x,y:best.r.y,w:Math.min(best.r.w,best.w+p.gap),h:Math.min(best.r.h,best.h+p.gap)},placed={...item.part,sourceBounds:item.b,placeX:used.x,placeY:used.y,rotated:best.rotated,sheet:best.si};sheets[best.si].parts.push(placed);sheets[best.si].free=split(sheets[best.si].free,used);
+ }
+ const placed=sheets.flatMap(s=>s.parts),usedArea=items.reduce((sum,q)=>sum+q.w*q.h,0),efficiency=usedArea/(Math.max(1,sheets.length)*p.sheetW*p.sheetH);
+ return {parts:placed,sheets:Math.max(1,sheets.length),efficiency};
 }
-const api={build,profile,stations,world,cutting,pack,bounds,area,intersections,contains,validatePart};
+const api={build,profile,stations,world,cutting,pack,placedPoint,bounds,area,intersections,contains,validatePart};
 if(typeof module!=='undefined')module.exports=api;else root.Cabinet=api;
 })(typeof window!=='undefined'?window:globalThis);
