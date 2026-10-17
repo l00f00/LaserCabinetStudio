@@ -39,7 +39,7 @@
         <p>Attiva o disattiva il frontalino su fondo, singoli ripiani e bordo alto. Nei vani con sportello o cassetto il frontalino non viene generato.</p>
       </div></details>
 
-      <details open><summary>03 · Angoli e frontali</summary><div class="fields">
+      <details><summary>03 · Angoli e frontali</summary><div class="fields">
         <label>Parete selezionata<select id="wallSelect"><option value="left" selected>Parete laterale sinistra</option><option value="right">Parete laterale destra</option><option value="top">Piano superiore</option><option value="bottom">Piano inferiore</option></select></label>
         <div class="fit"><span>Selezione 3D</span><strong id="selectedWall">Sinistra</strong></div>
         <div class="row"><label>Angolo lato sinistro<input id="angleL" type="number" min="45" max="135" step="0.5" value="45"></label><label>Angolo lato destro<input id="angleR" type="number" min="45" max="135" step="0.5" value="90"></label></div>
@@ -48,7 +48,7 @@
         <div class="fit"><span>Offset angoli</span><strong id="angleValue">0 / 0 mm</strong></div>
       </div></details>
 
-      <details open><summary>04 · Incastro e ferramenta</summary><div class="fields">
+      <details><summary>04 · Incastro e ferramenta</summary><div class="fields">
         <label>Tipo<select id="joint"><option value="tab">Linguetta + asola</option><option value="finger" selected>Finger joint · denti a pettine</option></select></label>
         <label>Cerniere<select id="hinge"><option value="none" selected>Nessuna</option><option value="left">A sinistra</option><option value="right">A destra</option><option value="both">Su entrambi i lati</option></select></label>
         <div id="hingeFields"><p>Anta e fori per cerniere esterne. Verifica le quote sulla ferramenta: non è una cerniera tagliata a laser.</p><label>Foro fissaggio Ø<input id="hingeSize" type="number" min="1" max="20" step="0.1" value="3"></label><label>Interasse fori<input id="hingePitch" type="number" min="5" value="32"></label><label>Distanza dal bordo<input id="hingeEdge" type="number" min="3" value="12"></label></div>
@@ -64,7 +64,7 @@
         </div>
       </div></details>
 
-      <details open><summary>05 · Sportelli e cassetti</summary><div class="fields">
+      <details><summary>05 · Sportelli e cassetti</summary><div class="fields">
         <p>Ogni vano può contenere fino a quattro elementi affiancati: sportelli, cassetti o spazi aperti.</p>
         <input id="frontConfig" type="hidden" value="{}">
         <div id="compartmentControls" class="compartment-list"></div>
