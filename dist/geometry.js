@@ -129,7 +129,32 @@ function buildOpenBox(p){
  parts.push({id:'O-bottom',module:1,key:'bottom',name:'OPENBOX FLOOR',outline:profile(rect(0,0,p.x,p.y),specs),holes:[],thickness:t,o:[0,0,0],u:[1,0,0],v:[0,1,0],n:[0,0,1]});
  parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[p.x]};
 }
+function closedBoxProfile(w,h,p,edges){
+ const t=p.thickness,specs=edges.split('').map((edge,i)=>{
+  const len=i%2===0?w:h,space=2*t,n=Math.floor((len-(2*t))/(space+p.finger));
+  const count=n>0?n:(len>p.finger+t?1:0),width=n>0?p.finger:count?len/2:0,leftover=n>0?len-n*(space+width)+space:count?len/2:len,start=leftover/2;
+  const intervals=Array.from({length:count},(_,j)=>{const a=start+j*(2*t+width),depth=edge===edge.toLowerCase()?-t:t;return [a,a+width,depth]});
+  return {base:0,intervals};
+ });
+ return profile(rect(0,0,w,h),specs);
+}
+function buildClosedBox(p){
+ const {x,y,h,thickness:t}=p,parts=[];
+ const make=(key,w,height,edges,o,u,v,n)=>parts.push({id:'C-'+key,module:1,key,name:'CLOSEDBOX '+key.toUpperCase(),outline:closedBoxProfile(w,height,p,edges),holes:[],thickness:t,o,u,v,n});
+ make('front',p.outside?x-2*t:x,p.outside?h-2*t:h,'FFFF',[0,0,0],[1,0,0],[0,0,1],[0,-1,0]);
+ make('right',p.outside?y-2*t:y,p.outside?h-2*t:h,'FfFf',[x,0,0],[0,1,0],[0,0,1],[1,0,0]);
+ make('back',p.outside?x-2*t:x,p.outside?h-2*t:h,'FFFF',[0,y,0],[-1,0,0],[0,0,1],[0,1,0]);
+ make('left',p.outside?y-2*t:y,p.outside?h-2*t:h,'FfFf',[0,y,0],[0,-1,0],[0,0,1],[-1,0,0]);
+ make('lid',p.outside?x-2*t:x,p.outside?y-2*t:y,'ffff',[0,0,h],[1,0,0],[0,1,0],[0,0,1]);
+ make('bottom',p.outside?x-2*t:x,p.outside?y-2*t:y,'ffff',[0,0,0],[1,0,0],[0,1,0],[0,0,1]);
+ parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[x]};
+}
 function build(p){
+ if(p.generator==='closedbox'){
+  for(const k of ['x','y','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
+  if(p.x<=0||p.y<=0||p.h<=0||p.thickness<=0||p.x<=2*p.thickness||p.y<=2*p.thickness||p.h<=2*p.thickness)throw Error('Dimensioni ClosedBox non valide.');
+  return buildClosedBox(p);
+ }
  if(p.generator==='abox'){
   for(const k of ['x','y','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
   if(p.x<=0||p.y<=0||p.h<=0||p.thickness<=0||p.x<=2*p.thickness||p.y<=2*p.thickness)throw Error('Dimensioni ABox non valide.');
