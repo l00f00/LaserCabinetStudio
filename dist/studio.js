@@ -1,7 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id), $$=q=>[...document.querySelectorAll(q)];
-const fields='generator x y h project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight handleSize handleHeight sheetW sheetH gap cutSpeed cutPower markSpeed markPower'.split(' ');
-const words=new Set('generator project lipMode lipConfig parachute joint hinge moduleJoin dovetailPolarity frontConfig'.split(' '));
+const fields='generator x y h outside edgetype project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight handleSize handleHeight sheetW sheetH gap cutSpeed cutPower markSpeed markPower'.split(' ');
+const words=new Set('generator project lipMode lipConfig parachute joint hinge moduleJoin dovetailPolarity frontConfig edgetype outside'.split(' '));
 const view={angle:-.7,tilt:.6,zoom:1,pan:[0,0],mode:'model',selected:'M1-left',sheet:0,explode:0,wire:false,cutZoom:1,cutPan:[0,0]};
 let current,packed,params,faces=[],revision=0;
 let compartmentSignature='';

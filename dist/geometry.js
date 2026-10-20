@@ -121,11 +121,24 @@ function buildABox(p){
  make('bottom',p.x-2*t,p.y-2*t,[t,t,0],[1,0,0],[0,1,0],[0,0,1],'floor');make('lid',p.x,p.y,[0,0,p.h],[1,0,0],[0,1,0],[0,0,1]);
  parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[p.x]};
 }
+function buildOpenBox(p){
+ const t=p.thickness,parts=[],intervals=(len,depth)=>{const n=Math.max(1,Math.floor((len-6*t)/(4*t))),step=len/n;return Array.from({length:n},(_,i)=>[i*step+step*.25,(i+1)*step-step*.25,depth])};
+ const wall=(key,w,h,o,u,v,n)=>parts.push({id:'O-'+key,module:1,key,name:'OPENBOX '+key.toUpperCase(),outline:profile(rect(0,0,w,h),[{base:0,intervals:intervals(w,-t)},null,null,null]),holes:[],thickness:t,o,u,v,n});
+ wall('back',p.x,p.h,[0,p.y-t,0],[1,0,0],[0,0,1],[0,-1,0]);wall('left',p.y-2*t,p.h,[t,t,0],[0,1,0],[0,0,1],[1,0,0]);wall('right',p.y-2*t,p.h,[p.x-t,p.y-t,0],[0,-1,0],[0,0,1],[-1,0,0]);
+ const specs=Array.from({length:4},(_,i)=>i===0?{base:0,intervals:[]}:{base:0,intervals:intervals(i%2?p.y-2*t:p.x,t)});
+ parts.push({id:'O-bottom',module:1,key:'bottom',name:'OPENBOX FLOOR',outline:profile(rect(0,0,p.x,p.y),specs),holes:[],thickness:t,o:[0,0,0],u:[1,0,0],v:[0,1,0],n:[0,0,1]});
+ parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[p.x]};
+}
 function build(p){
  if(p.generator==='abox'){
   for(const k of ['x','y','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
   if(p.x<=0||p.y<=0||p.h<=0||p.thickness<=0||p.x<=2*p.thickness||p.y<=2*p.thickness)throw Error('Dimensioni ABox non valide.');
   return buildABox(p);
+ }
+ if(p.generator==='openbox'){
+  for(const k of ['x','y','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
+  if(p.x<=0||p.y<=0||p.h<=0||p.thickness<=0||p.x<=2*p.thickness||p.y<=2*p.thickness)throw Error('Dimensioni OpenBox non valide.');
+  return buildOpenBox(p);
  }
  p={moduleJoin:'wall',dovetailPolarity:'positive',dovetailCount:3,dovetailDepth:15,lipConfig:'{}',frontConfig:'{}',frontGap:2,drawerClearance:2,drawerHeight:80,handleSize:32,handleHeight:16,...p};
  for(const k of ['width','height','depth','thickness','kerf','modules','split','shelves','lip','angleL','angleR','parachuteDepth','hingeSize','hingeEdge','hingePitch','finger','press','dovetailCount','dovetailDepth','frontGap','drawerClearance','drawerHeight','handleSize','handleHeight','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Inserisci un numero valido: '+k);
