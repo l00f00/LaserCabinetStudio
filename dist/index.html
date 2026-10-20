@@ -18,13 +18,14 @@
       <section class="intro">
         <div class="eyebrow">PROGETTO</div>
         <input id="project" class="project" value="Mobiletto camper">
-        <label>Generatore<select id="generator"><option value="cabinet" selected>Mobiletto</option><option value="abox">ABox · scatola con coperchio</option><option value="openbox">OpenBox · scatola aperta</option><option value="closedbox">ClosedBox · scatola chiusa</option><option value="halfbox">HalfBox · supporto triangolare</option><option value="regularbox">RegularBox · scatola poligonale</option></select></label>
+        <label>Generatore<select id="generator"><option value="cabinet" selected>Mobiletto</option><option value="abox">ABox · scatola con coperchio</option><option value="openbox">OpenBox · scatola aperta</option><option value="closedbox">ClosedBox · scatola chiusa</option><option value="halfbox">HalfBox · supporto triangolare</option><option value="regularbox">RegularBox · scatola poligonale</option><option value="smallpartstray">SmallPartsTray · vassoio con divisorio</option></select></label>
         <div class="row"><label>X mm<input id="x" type="number" value="180"></label><label>Y mm<input id="y" type="number" value="120"></label><label>H mm<input id="h" type="number" value="90"></label></div>
         <label id="syWrap" hidden>Divisioni supporti (mm, separate da :)<input id="sy" type="text" value="50:50" inputmode="decimal"></label>
         <div id="regularBoxWrap" hidden><div class="row"><label>Raggio base<input id="radiusBottom" type="number" min="10" value="50"></label><label>Raggio superiore<input id="radiusTop" type="number" min="5" value="50"></label><label>Lati<input id="n" type="number" min="3" max="12" step="1" value="5"></label></div><div class="row"><label>Fondo<select id="bottom"><option>none</option><option selected>closed</option><option>hole</option><option>angled hole</option><option>angled lid</option><option>angled lid2</option><option>round lid</option></select></label><label>Cima<select id="top"><option selected>none</option><option>hole</option><option>angled hole</option><option>angled lid</option><option>angled lid2</option><option>round lid</option><option>closed</option></select></label></div><small>Profili poligonali RegularBox. Attacco a baionetta non supportato.</small></div>
         <label><input id="outside" type="checkbox"> Quote esterne</label>
         <label class="example-picker">Esempio iniziale<select id="examplePreset"><option value="">Scegli un esempio…</option><option value="base">Mobiletto camper base</option><option value="corner">Angolare 45° · 2 ripiani</option><option value="drawers">Cassettiera 250 × 600 × 300</option><option value="kitchen">Pensile cucina misto</option></select></label>
         <p>Modifica una quota: modello, incastri e piano di taglio si aggiornano insieme.</p>
+        <p id="trayNote" hidden>Il divisorio è un giunto di testa incollato, non un incastro.</p>
       </section>
 
       <details open><summary>01 · Ingombro e materiale</summary><div class="fields">

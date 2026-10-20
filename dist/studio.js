@@ -46,10 +46,15 @@ function syncLips(p){
 function notice(s,error=false){$('validation').textContent=s;$('validation').classList.toggle('error',error)}
 function select(id){view.selected=id;$('wallSelect').value=id;const p=current?.parts.find(p=>p.id===id);$('selectedWall').textContent=p?.name||'—';['angleL','angleR'].forEach((k,i)=>$(k).closest('label').classList.toggle('selected-field',p?.key===(i?'right':'left')));render3D();renderCut();if(view.mode==='summary')render3D($('summaryModel'),false)}
 function update(){
- revision++;params=read();const isHalfBox=params.generator==='halfbox',isRegularBox=params.generator==='regularbox';$('syWrap').hidden=!isHalfBox;$('regularBoxWrap').hidden=!isRegularBox;$('y').closest('label').hidden=isHalfBox||isRegularBox;$('x').closest('label').hidden=isRegularBox;$('outside').closest('label').hidden=isHalfBox;if(syncCompartments(params))params=read();if(syncLips(params))params=read();let error='';
+ revision++;params=read();const isHalfBox=params.generator==='halfbox',isRegularBox=params.generator==='regularbox',isTray=params.generator==='smallpartstray';
+ $('trayNote').hidden=!isTray;$('syWrap').hidden=!isHalfBox;$('regularBoxWrap').hidden=!isRegularBox;$('y').closest('label').hidden=isHalfBox||isRegularBox;$('x').closest('label').hidden=isRegularBox;$('outside').closest('label').hidden=isHalfBox||isTray;
+ document.querySelector('.example-picker').hidden=isTray;['width','height','depth','split'].forEach(k=>$(k).closest('label').hidden=isTray);
+ document.querySelectorAll('aside > details').forEach((el,i)=>{if(i>0&&i<5)el.hidden=isTray&&i!==3});
+ $('joint').closest('label').hidden=isTray;$('hinge').closest('label').hidden=isTray;$('moduleJoin').closest('label').hidden=isTray;$('dovetailOptions').hidden=isTray;$('dovetailOptions').previousElementSibling.hidden=isTray;
+ if(syncCompartments(params))params=read();if(syncLips(params))params=read();let error='';
  ['width','height','depth','split'].forEach(k=>$(k+'Out').textContent=params[k]+(k==='split'?' %':' mm'));
  $('splitWrap').hidden=params.modules!==2;
- $('hingeFields').hidden=params.hinge==='none';
+ $('hingeFields').hidden=isTray||params.hinge==='none';
  $('parachuteDepth').disabled=params.parachute==='none';
  $('parachute').disabled=params.lipMode==='none'||params.lip===0;
  $('lip').disabled=params.lipMode==='none';

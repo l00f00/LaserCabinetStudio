@@ -169,6 +169,17 @@ function buildHalfBox(p){
  }
  parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[x]};
 }
+function buildSmallPartsTray(p){
+ const {x,y,h,thickness:t}=p,parts=[],joint=(len,male)=>aboxIntervals(len,p,male),floorSpec=[{base:0,intervals:joint(x,true)},{base:0,intervals:joint(y,true)},{base:0,intervals:joint(x,true)},{base:0,intervals:joint(y,true)}],wallH=h-t;
+ const addPart=(key,w,d,o,u,v,n,outline=rect(0,0,w,d))=>parts.push({id:'T-'+key,module:1,key,name:'SMALLPARTSTRAY '+key.toUpperCase(),outline,holes:[],thickness:t,o,u,v,n});
+ addPart('bottom',x,y,[0,0,0],[1,0,0],[0,1,0],[0,0,1],profile(rect(0,0,x,y),floorSpec));
+ const wall=(key,w,o,u,n)=>addPart(key,w,wallH,o,u,[0,0,1],n,profile(rect(0,0,w,wallH),[{base:0,intervals:joint(w,false)},null,null,null]));
+ wall('front',x,[0,t,t],[1,0,0],[0,-1,0]);wall('back',x,[x,y-t,t],[-1,0,0],[0,1,0]);
+ addPart('left',y-2*t,wallH,[t,t,t],[0,1,0],[0,0,1],[-1,0,0],profile(rect(0,0,y-2*t,wallH),[{base:0,intervals:joint(y-2*t,false)},null,null,null]));addPart('right',y-2*t,wallH,[x-t,y-t,t],[0,-1,0],[0,0,1],[1,0,0],profile(rect(0,0,y-2*t,wallH),[{base:0,intervals:joint(y-2*t,false)},null,null,null]));
+ const dividerY=y/2+t/2;if(dividerY-t/2<=t||dividerY+t/2>=y-t)throw Error('Posizione divisorio senza luce dalle pareti.');
+ addPart('divider',x-2*t,wallH,[t,dividerY,t],[1,0,0],[0,0,1],[0,-1,0]);
+ parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[x]};
+}
 function buildRegularBox(p){
  const t=p.thickness,parts=[],space=p.finger/2,finger=p.finger/2;
  let {radiusBottom:r0,radiusTop:r1,n,h}=p;
@@ -227,6 +238,11 @@ function buildRegularBox(p){
  parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[2*r0]};
 }
 function build(p){
+ if(p.generator==='smallpartstray'){
+  for(const k of ['x','y','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
+  if(p.x<=6*p.thickness||p.y<=8*p.thickness||p.h<=p.thickness||p.thickness<=0||p.finger<8||p.finger>80||p.kerf<0||p.kerf>1||p.press<0||p.press>.5||p.sheetW<=0||p.sheetH<=0||p.gap<0)throw Error('Dimensioni SmallPartsTray non valide.');
+  return buildSmallPartsTray(p);
+ }
  if(p.generator==='regularbox'){
   for(const k of ['radiusBottom','radiusTop','n','h','thickness','finger','kerf','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota RegularBox non valida: '+k);
   if(!Number.isInteger(p.n)||p.n<3||p.n>12||p.radiusBottom<=2*p.thickness||p.radiusTop<=0||p.h<=2*p.thickness||p.thickness<=0||p.finger<=0||p.kerf<0||p.kerf>1||p.press<0||p.press>.5||p.sheetW<=0||p.sheetH<=0||p.gap<0)throw Error('Parametri RegularBox non validi.');
