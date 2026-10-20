@@ -102,7 +102,31 @@ function validatePart(p){
  if(p.outline.some(q=>q.some(x=>!Number.isFinite(x)))||area(p.outline)<=EPS||intersections(p.outline))throw Error(p.name+': contorno non valido.');
  for(const hole of p.holes)if(area(hole)<=EPS||intersections(hole)||hole.some(q=>!contains(p.outline,q)))throw Error(p.name+': foro fuori dal pannello; riduci i fori o modifica le quote.');
 }
+function aboxIntervals(len,p,positive){
+ const t=p.thickness,space=2*t,finger=2*t,n=Math.floor((len-space)/(space+finger));
+ if(n<1)throw Error('Bordo ABox troppo corto per i denti.');
+ const leftover=len-n*(space+finger)+space,start=leftover/2,play=p.press;
+ return Array.from({length:n},(_,i)=>{const a=start+i*(space+finger),b=a+finger;return positive?[a-play,b+play,t]:[a,b,-t]});
+}
+function aboxProfile(w,h,p,key){
+ const specs=Array.from({length:4},()=>({base:0,intervals:[]}));
+ if(key==='wall')specs[0].intervals=aboxIntervals(w,p,false);
+ if(key==='floor')for(let i=0;i<4;i++)specs[i].intervals=aboxIntervals(i%2?h:w,p,true);
+ return profile(rect(0,0,w,h),specs);
+}
+function buildABox(p){
+ const t=p.thickness,parts=[],make=(key,w,h,o,u,v,n,type)=>{const outline=type?aboxProfile(w,h,p,type):rect(0,0,w,h);parts.push({id:'A-'+key,module:1,key,name:'ABOX '+key.toUpperCase(),outline,holes:[],thickness:t,o,u,v,n})};
+ make('front',p.x-2*t,p.h,[t,0,0],[1,0,0],[0,0,1],[0,1,0],'wall');make('back',p.x-2*t,p.h,[t,p.y-t,0],[1,0,0],[0,0,1],[0,-1,0],'wall');
+ make('left',p.y-2*t,p.h,[t,t,0],[0,1,0],[0,0,1],[1,0,0],'wall');make('right',p.y-2*t,p.h,[p.x-t,p.y-t,0],[0,-1,0],[0,0,1],[-1,0,0],'wall');
+ make('bottom',p.x-2*t,p.y-2*t,[t,t,0],[1,0,0],[0,1,0],[0,0,1],'floor');make('lid',p.x,p.y,[0,0,p.h],[1,0,0],[0,1,0],[0,0,1]);
+ parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[p.x]};
+}
 function build(p){
+ if(p.generator==='abox'){
+  for(const k of ['x','y','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
+  if(p.x<=0||p.y<=0||p.h<=0||p.thickness<=0||p.x<=2*p.thickness||p.y<=2*p.thickness)throw Error('Dimensioni ABox non valide.');
+  return buildABox(p);
+ }
  p={moduleJoin:'wall',dovetailPolarity:'positive',dovetailCount:3,dovetailDepth:15,lipConfig:'{}',frontConfig:'{}',frontGap:2,drawerClearance:2,drawerHeight:80,handleSize:32,handleHeight:16,...p};
  for(const k of ['width','height','depth','thickness','kerf','modules','split','shelves','lip','angleL','angleR','parachuteDepth','hingeSize','hingeEdge','hingePitch','finger','press','dovetailCount','dovetailDepth','frontGap','drawerClearance','drawerHeight','handleSize','handleHeight','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Inserisci un numero valido: '+k);
  if(p.finger<8||p.finger>80||p.lip<0||p.hingeSize<=0||p.hingePitch<=0||p.hingeEdge<=0||p.parachuteDepth<=0)throw Error('Passo dente: 8–80 mm. Controlla le quote dei frontalini e dei fori.');

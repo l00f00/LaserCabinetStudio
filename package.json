@@ -5,8 +5,8 @@
   "description": "Parametric laser-cut cabinet designer with nesting and SVG/DXF export.",
   "scripts": {
     "dev": "node scripts/serve.mjs",
-    "test": "node tests/geometry.test.cjs && node tests/archive.test.cjs",
-    "check": "node --check dist/geometry.js && node --check dist/archive.js && node --check dist/studio.js && node tests/geometry.test.cjs && node tests/archive.test.cjs"
+    "test": "node tests/geometry.test.cjs && node tests/abox.test.cjs && node tests/archive.test.cjs",
+    "check": "node --check dist/geometry.js && node --check dist/archive.js && node --check dist/studio.js && node tests/geometry.test.cjs && node tests/abox.test.cjs && node tests/archive.test.cjs"
   },
   "license": "UNLICENSED"
 }
