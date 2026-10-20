@@ -1,7 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id), $$=q=>[...document.querySelectorAll(q)];
-const fields='generator x y h sy outside project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight handleSize handleHeight sheetW sheetH gap cutSpeed cutPower markSpeed markPower'.split(' ');
-const words=new Set('generator project sy lipMode lipConfig parachute joint hinge moduleJoin dovetailPolarity frontConfig'.split(' '));
+const fields='generator x y h sy radiusBottom radiusTop n bottom top outside project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight handleSize handleHeight sheetW sheetH gap cutSpeed cutPower markSpeed markPower'.split(' ');
+const words=new Set('generator project sy lipMode lipConfig parachute joint hinge moduleJoin dovetailPolarity frontConfig bottom top'.split(' '));
 const view={angle:-.7,tilt:.6,zoom:1,pan:[0,0],mode:'model',selected:'M1-left',sheet:0,explode:0,wire:false,cutZoom:1,cutPan:[0,0]};
 let current,packed,params,faces=[],revision=0;
 let compartmentSignature='';
@@ -46,7 +46,7 @@ function syncLips(p){
 function notice(s,error=false){$('validation').textContent=s;$('validation').classList.toggle('error',error)}
 function select(id){view.selected=id;$('wallSelect').value=id;const p=current?.parts.find(p=>p.id===id);$('selectedWall').textContent=p?.name||'—';['angleL','angleR'].forEach((k,i)=>$(k).closest('label').classList.toggle('selected-field',p?.key===(i?'right':'left')));render3D();renderCut();if(view.mode==='summary')render3D($('summaryModel'),false)}
 function update(){
- revision++;params=read();const isHalfBox=params.generator==='halfbox';$('syWrap').hidden=!isHalfBox;$('y').closest('label').hidden=isHalfBox;$('outside').closest('label').hidden=isHalfBox;if(syncCompartments(params))params=read();if(syncLips(params))params=read();let error='';
+ revision++;params=read();const isHalfBox=params.generator==='halfbox',isRegularBox=params.generator==='regularbox';$('syWrap').hidden=!isHalfBox;$('regularBoxWrap').hidden=!isRegularBox;$('y').closest('label').hidden=isHalfBox||isRegularBox;$('x').closest('label').hidden=isRegularBox;$('outside').closest('label').hidden=isHalfBox;if(syncCompartments(params))params=read();if(syncLips(params))params=read();let error='';
  ['width','height','depth','split'].forEach(k=>$(k+'Out').textContent=params[k]+(k==='split'?' %':' mm'));
  $('splitWrap').hidden=params.modules!==2;
  $('hingeFields').hidden=params.hinge==='none';

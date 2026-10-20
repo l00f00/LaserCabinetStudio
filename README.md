@@ -25,6 +25,7 @@ Demo: [laser-cabinet-studio.l00f00.chatgpt.site](https://laser-cabinet-studio.l0
 - HTML5 e CSS responsive, senza framework;
 - JavaScript ES2022 per geometria parametrica e interfaccia;
 - Canvas 2D per il modello 3D, SVG per il piano di taglio;
+- RegularBox «angled lid» produce due pannelli poligonali piani; il secondo usa il bordo Boxes.py `E`, cioè un offset esterno pari allo spessore. La preview 3D non rappresenta l'inclinazione fuori piano dei pannelli.
 - esportazione SVG e DXF generata nel browser;
 - Node.js built-in test runner/assert per le verifiche geometriche;
 - hosting statico OpenAI Sites, senza database né account utente.

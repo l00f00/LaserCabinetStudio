@@ -169,7 +169,69 @@ function buildHalfBox(p){
  }
  parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[x]};
 }
+function buildRegularBox(p){
+ const t=p.thickness,parts=[],space=p.finger/2,finger=p.finger/2;
+ let {radiusBottom:r0,radiusTop:r1,n,h}=p;
+ if(p.outside){const inset=t/Math.cos(Math.PI/n);r0-=inset;r1-=inset;h-=p.top==='none'?t:p.top.includes('lid')&&p.top!=='angled lid'?3*t:2*t;}
+ const joint=(len,positive,angle=90)=>{
+  let count=Math.floor(len/(space+finger)),leftover=len-count*(space+finger)+space,width=finger,gap=space,play=positive?0:p.press;
+  if(count===0&&finger&&leftover>.75*t&&leftover>4*play){count=1;width=leftover/2;leftover=width}
+  if(!positive){width+=play;gap-=play;leftover-=play}
+  const start=leftover/2,baseDepth=angle>=90||angle<=-90?t:angle<0?Math.sin(-angle*Math.PI/180)*t:t*Math.tan(angle*Math.PI/360)*(1+Math.sin((90-angle)*Math.PI/180));
+  const depth=(positive?-1:1)*baseDepth;
+  return Array.from({length:count},(_,i)=>[start+i*(gap+width),start+i*(gap+width)+width,depth]);
+ };
+ const edge=(code,len)=>({base:0,intervals:code==='y'?joint(len,true,angleBottom):code==='Y'?joint(len,false,angleBottom):code==='z'?joint(len,true,angleTop):code==='Z'?joint(len,false,angleTop):code==='g'||code==='G'?joint(len,code==='g',phi):[]});
+ const polygonWall=(borders,codes)=>{
+  let x=0,y=0,heading=0,points=[[0,0]],specs=[];
+  for(let i=0,j=0;i<borders.length;i+=2,j++){
+   const len=borders[i],angle=borders[i+1];
+   if(len>1e-8){x+=Math.cos(heading*Math.PI/180)*len;y+=Math.sin(heading*Math.PI/180)*len;points.push([x,y]);specs.push(edge(codes[j],len))}
+   heading+=angle;
+  }
+  if(Math.hypot(x,y)>1e-5)throw Error('RegularBox: profilo parete non chiude.');
+  points.pop();
+  if(points.length!==specs.length)throw Error('RegularBox: profilo parete non valido.');
+  return profile(points,specs);
+ };
+ const side0=2*r0*Math.sin(Math.PI/n),side1=2*r1*Math.sin(Math.PI/n),taperOffset=(side0-side1)/2,panelH=Math.hypot((r1-r0)*Math.cos(Math.PI/n),h),slant=Math.hypot(r1-r0,h),a=Math.asin((side1-side0)/(2*slant))*180/Math.PI,phi=180-2*Math.asin(Math.cos(Math.PI/n)/Math.cos(a*Math.PI/180))*180/Math.PI;
+ const sh0=r0*Math.cos(Math.PI/n),sh1=r1*Math.cos(Math.PI/n),beta=Math.atan((sh1-sh0)/h)*180/Math.PI,angleBottom=90+beta,angleTop=90-beta;
+ const t_=angle=>angle>=90?t:t*Math.tan(angle*Math.PI/360)*(1+Math.sin((90-angle)*Math.PI/180)),dTop=Math.max(0,-t_(phi)*Math.sin(a*Math.PI/180)),dBottom=Math.max(0,t_(phi)*Math.sin(a*Math.PI/180));
+ const adjustedSlant=slant-dTop-dBottom;
+ const angles=Array.from({length:n},(_,i)=>-Math.PI/2-Math.PI/n+i*2*Math.PI/n),bottom=angles.map(q=>[r0*Math.cos(q),r0*Math.sin(q)]),top=angles.map(q=>[r1*Math.cos(q),r1*Math.sin(q)]);
+ const bottomType=p.bottom||'closed',topType=p.top||'none';
+ if(topType==='bayonet mount')throw Error('RegularBox bayonet mount unsupported: exact callback lug/slot geometry is not implemented.');
+ const polygonAperture=poly=>insetEdges(poly,poly.map(()=>t));
+ const bottomHasRing=['closed','hole','angled hole','angled lid2','round lid'].includes(bottomType);
+ if(bottomHasRing){
+  const floor=profile(bottom,bottom.map(()=>edge('Y',side0)));
+  parts.push({id:'R-bottom',module:1,key:'bottom',name:'REGULARBOX FONDO · '+n+' LATI',outline:floor,holes:bottomType==='angled hole'||bottomType==='angled lid2'?[polygonAperture(bottom)]:bottomType==='hole'||bottomType==='round lid'?[circle(0,0,Math.max(1,sh0-t))]:[],thickness:t,o:[0,0,0],u:[1,0,0],v:[0,1,0],n:[0,0,-1]});
+ }
+ if(bottomType==='round lid')parts.push({id:'R-bottom-lid',module:1,key:'bottom-lid',name:'REGULARBOX COPERCHIO INFERIORE',outline:circle(0,0,sh0),holes:[],thickness:t,o:[0,0,0],u:[1,0,0],v:[0,1,0],n:[0,0,-1]});
+ if(bottomType==='angled lid')for(const [i,outline] of [bottom,offset(bottom,t)].entries())parts.push({id:'R-bottom-lid-'+i,module:1,key:'bottom-lid-'+i,name:'REGULARBOX ANGLED BOTTOM PANEL '+(i+1),outline,holes:[],thickness:t,o:[0,0,0],u:[1,0,0],v:[0,1,0],n:[0,0,-1]});
+ if(bottomType==='angled lid2')parts.push({id:'R-bottom-lid',module:1,key:'bottom-lid',name:'REGULARBOX E-EDGE BOTTOM LID',outline:offset(bottom,t),holes:[],thickness:t,o:[0,0,0],u:[1,0,0],v:[0,1,0],n:[0,0,-1]});
+ const bottomCode=['closed','hole','angled hole','angled lid2','round lid'].includes(bottomType)?'y':'e',topCode=['closed','hole','angled hole','angled lid2','round lid','bayonet mount'].includes(topType)?'z':'e';
+ let bordersOdd=[side0,90-a,dBottom,0,adjustedSlant,0,dTop,90+a,side1,90+a,dTop,-90,t_,90,adjustedSlant,90,t_,-90,dBottom,90-a];
+ const codesOdd=bottomCode+'ege'+topCode+'eeGee';
+ const borders0=[side0,90-a,dBottom,-90,t_,90,adjustedSlant,90,t_,-90,dTop,90+a,side1,90+a,dTop,-90,t_,90,adjustedSlant,90,t_,-90,dBottom,90-a],codes0=bottomCode+'eeGee'+topCode+'eeGee';
+ const borders1=[side0,90-a,dBottom,0,adjustedSlant,0,dTop,90+a,side1,90+a,dTop,0,adjustedSlant,0,dBottom,90-a],codes1=bottomCode+'ege'+topCode+'ege';
+ for(let i=0;i<n;i++){
+  const p0=bottom[i],p1=bottom[(i+1)%n],q0=top[i],u=[(p1[0]-p0[0])/side0,(p1[1]-p0[1])/side0,0],v=[(q0[0]-p0[0]-u[0]*taperOffset)/panelH,(q0[1]-p0[1]-u[1]*taperOffset)/panelH,h/panelH],normal=[u[1]*v[2],-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+  const odd=n%2===1,outline=polygonWall(odd?bordersOdd:(i%2===0?borders0:borders1),odd?codesOdd:(i%2===0?codes0:codes1));
+  parts.push({id:'R-wall-'+i,module:1,key:'wall-'+i,name:'REGULARBOX PARETE '+(i+1),outline,holes:[],thickness:t,o:[p0[0],p0[1],0],u,v,n:normal});
+ }
+ if(topType!=='none'&&topType!=='angled lid') { const ring=profile(top,top.map(()=>edge(topCode,side1))); parts.push({id:'R-top',module:1,key:'top',name:'REGULARBOX TOP · '+topType,outline:ring,holes:topType==='angled hole'||topType==='angled lid2'?[polygonAperture(top)]:topType==='hole'||topType==='round lid'?[circle(0,0,Math.max(1,sh1-t))]:[],thickness:t,o:[0,0,h],u:[1,0,0],v:[0,1,0],n:[0,0,1]}); }
+ if(topType==='angled lid')for(const [i,outline] of [top,offset(top,t)].entries())parts.push({id:'R-top-lid-'+i,module:1,key:'top-lid-'+i,name:'REGULARBOX ANGLED LID PANEL '+(i+1),outline,holes:[],thickness:t,o:[0,0,h],u:[1,0,0],v:[0,1,0],n:[0,0,1]});
+ if(topType==='round lid')parts.push({id:'R-top-lid',module:1,key:'top-lid',name:'REGULARBOX LID · '+topType,outline:circle(0,0,sh1),holes:[],thickness:t,o:[0,0,h],u:[1,0,0],v:[0,1,0],n:[0,0,1]});
+ if(topType==='angled lid2')parts.push({id:'R-top-lid',module:1,key:'top-lid',name:'REGULARBOX E-EDGE LID · '+topType,outline:offset(top,t),holes:[],thickness:t,o:[0,0,h],u:[1,0,0],v:[0,1,0],n:[0,0,1]});
+ parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[2*r0]};
+}
 function build(p){
+ if(p.generator==='regularbox'){
+  for(const k of ['radiusBottom','radiusTop','n','h','thickness','finger','kerf','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota RegularBox non valida: '+k);
+  if(!Number.isInteger(p.n)||p.n<3||p.n>12||p.radiusBottom<=2*p.thickness||p.radiusTop<=0||p.h<=2*p.thickness||p.thickness<=0||p.finger<=0||p.kerf<0||p.kerf>1||p.press<0||p.press>.5||p.sheetW<=0||p.sheetH<=0||p.gap<0)throw Error('Parametri RegularBox non validi.');
+  return buildRegularBox(p);
+ }
  if(p.generator==='halfbox'){
   for(const k of ['x','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
   if(p.x<=0||p.h<=0||p.thickness<=0||p.x<=2*p.thickness||p.h<=2*p.thickness)throw Error('Dimensioni HalfBox non valide.');
