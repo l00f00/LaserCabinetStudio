@@ -1,7 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id), $$=q=>[...document.querySelectorAll(q)];
-const fields='generator x y h outside project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight handleSize handleHeight sheetW sheetH gap cutSpeed cutPower markSpeed markPower'.split(' ');
-const words=new Set('generator project lipMode lipConfig parachute joint hinge moduleJoin dovetailPolarity frontConfig'.split(' '));
+const fields='generator x y h sy outside project width height depth thickness kerf modules split shelves lip lipMode lipConfig angleL angleR parachute parachuteDepth joint hinge hingeSize hingeEdge hingePitch finger press moduleJoin dovetailPolarity dovetailCount dovetailDepth frontConfig frontGap drawerClearance drawerHeight handleSize handleHeight sheetW sheetH gap cutSpeed cutPower markSpeed markPower'.split(' ');
+const words=new Set('generator project sy lipMode lipConfig parachute joint hinge moduleJoin dovetailPolarity frontConfig'.split(' '));
 const view={angle:-.7,tilt:.6,zoom:1,pan:[0,0],mode:'model',selected:'M1-left',sheet:0,explode:0,wire:false,cutZoom:1,cutPan:[0,0]};
 let current,packed,params,faces=[],revision=0;
 let compartmentSignature='';
@@ -46,7 +46,7 @@ function syncLips(p){
 function notice(s,error=false){$('validation').textContent=s;$('validation').classList.toggle('error',error)}
 function select(id){view.selected=id;$('wallSelect').value=id;const p=current?.parts.find(p=>p.id===id);$('selectedWall').textContent=p?.name||'—';['angleL','angleR'].forEach((k,i)=>$(k).closest('label').classList.toggle('selected-field',p?.key===(i?'right':'left')));render3D();renderCut();if(view.mode==='summary')render3D($('summaryModel'),false)}
 function update(){
- revision++;params=read();if(syncCompartments(params))params=read();if(syncLips(params))params=read();let error='';
+ revision++;params=read();const isHalfBox=params.generator==='halfbox';$('syWrap').hidden=!isHalfBox;$('y').closest('label').hidden=isHalfBox;$('outside').closest('label').hidden=isHalfBox;if(syncCompartments(params))params=read();if(syncLips(params))params=read();let error='';
  ['width','height','depth','split'].forEach(k=>$(k+'Out').textContent=params[k]+(k==='split'?' %':' mm'));
  $('splitWrap').hidden=params.modules!==2;
  $('hingeFields').hidden=params.hinge==='none';
@@ -94,11 +94,11 @@ function render3D(canvas=$('model'),interactive=canvas===$('model')){
  const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;
  const dpr=window.devicePixelRatio||1;canvas.width=r.width*dpr;canvas.height=r.height*dpr;const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.fillStyle='#eae7df';ctx.fillRect(0,0,r.width,r.height);if(interactive)faces=[];
  if(!current){ctx.fillStyle='#a42620';ctx.fillText('Quote non valide: controlla il messaggio sopra.',24,35);return}
- const all=current.parts.flatMap(p=>p.outline.flatMap(q=>[projected(p,q,0),projected(p,q,p.thickness)])),b=Cabinet.bounds(all);
+ const visible=current.parts.filter(p=>!p.hidden3d),all=visible.flatMap(p=>p.outline.flatMap(q=>[projected(p,q,0),projected(p,q,p.thickness)])),b=Cabinet.bounds(all);
  const scale=Math.min((r.width-90)/(b.maxX-b.minX),(r.height-90)/(b.maxY-b.minY))*view.zoom;
  const screen=q=>[(q[0]-(b.maxX+b.minX)/2)*scale+r.width/2+view.pan[0],(q[1]-(b.maxY+b.minY)/2)*scale+r.height/2+view.pan[1]];
  const queue=[];
- for(const p of current.parts){
+ for(const p of visible){
   const loops=[p.outline,...p.holes];
   for(const z of [0,p.thickness])queue.push({p,loops:loops.map(loop=>loop.map(q=>projected(p,q,z))),side:false});
   for(const loop of loops)loop.forEach((q,i)=>{const next=loop[(i+1)%loop.length];queue.push({p,loops:[[projected(p,q,0),projected(p,next,0),projected(p,next,p.thickness),projected(p,q,p.thickness)]],side:true})});

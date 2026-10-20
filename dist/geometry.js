@@ -149,7 +149,32 @@ function buildClosedBox(p){
  make('bottom',p.outside?x-2*t:x,p.outside?y-2*t:y,'ffff',[0,0,0],[1,0,0],[0,1,0],[0,0,1]);
  parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[x]};
 }
+function buildHalfBox(p){
+ const {x,h,thickness:t}=p,parts=[],sy=String(p.sy??'50:50').split(':').map(Number);
+ if(!sy.length||sy.some(v=>!Number.isFinite(v)||v<=0))throw Error('Divisione sy non valida.');
+ const widths=[0,...sy,0],depth=widths.reduce((a,b)=>a+b,0)+(widths.length-1)*t;
+ const make=(key,outline,o,u,v,n,holes=[],hidden3d=false)=>parts.push({id:'H-'+key,module:1,key,name:key==='invisible'?'HALFBOX INVISIBLE · SOLO TAGLIO':'HALFBOX '+key.toUpperCase(),outline,holes,thickness:t,o,u,v,n,hidden3d});
+ const space=2*t,finger=2*t;
+ const joint=(len,depth,play=0)=>{let count=Math.floor((len-space)/(space+finger));if(!finger)count=0;let width=finger+play;if(count===0&&len>finger+t){count=1;width=(len-space)/2+play}const leftover=count?len-count*(space+finger)+space-play:len,start=leftover/2;return Array.from({length:count},(_,i)=>[start+i*(space+finger),start+i*(space+finger)+width,depth])};
+ const rows=[];let row=-t/2;for(const segment of widths.slice(0,-1)){row+=segment+t;rows.push(row)}
+ const slots=(len,edge)=>{const edge0=[],edge2=[],holes=[];for(const y of rows){const fingers=joint(len,t,p.press);if(y<=t/2+EPS)edge0.push(...fingers);else if(y>=depth-t/2-EPS)edge2.push(...fingers.map(([a,b,d])=>[len-b,len-a,d]).reverse());else for(const [a,b] of joint(len,0,p.press))holes.push(rect(a,y-(t+p.press)/2,b-a,t+p.press))}const edge1=edge==='male'?joint(depth,-t):[],edge3=edge==='female'?joint(depth,t,p.press).map(([a,b,d])=>[depth-b,depth-a,d]).reverse():[];return {outline:profile(rect(0,0,len,depth),[{base:0,intervals:edge0},{base:0,intervals:edge1},{base:0,intervals:edge2},{base:0,intervals:edge3}]),holes};};
+ const bottom=slots(x,'male'),side=slots(h,'female'),invisible=slots(x,'male');
+ make('bottom',bottom.outline,[0,0,0],[1,0,0],[0,1,0],[0,0,-1],bottom.holes);
+ make('side',side.outline,[x,0,0],[0,0,1],[0,1,0],[1,0,0],side.holes);
+ // Boxes.py names this spare cut panel "invisible"; keep it in cut output, not the assembled preview.
+ make('invisible',invisible.outline,[0,0,-t],[1,0,0],[0,1,0],[0,0,-1],invisible.holes,true);
+ for(let i=0;i<rows.length;i++){
+  const outline=profile([[0,0],[x,0],[x,h]],[{base:0,intervals:joint(x,-t)},{base:0,intervals:joint(h,-t)},{base:0,intervals:[]}]);
+  make('support-'+i,outline,[0,rows[i]+t/2,0],[1,0,0],[0,0,1],[0,-1,0]);
+ }
+ parts.forEach(validatePart);return {parts,joints:[],L:0,R:0,widths:[x]};
+}
 function build(p){
+ if(p.generator==='halfbox'){
+  for(const k of ['x','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
+  if(p.x<=0||p.h<=0||p.thickness<=0||p.x<=2*p.thickness||p.h<=2*p.thickness)throw Error('Dimensioni HalfBox non valide.');
+  return buildHalfBox(p);
+ }
  if(p.generator==='closedbox'){
   for(const k of ['x','y','h','thickness','kerf','finger','press','sheetW','sheetH','gap'])if(!Number.isFinite(p[k]))throw Error('Quota non valida: '+k);
   if(p.x<=0||p.y<=0||p.h<=0||p.thickness<=0||p.x<=2*p.thickness||p.y<=2*p.thickness||p.h<=2*p.thickness)throw Error('Dimensioni ClosedBox non valide.');
